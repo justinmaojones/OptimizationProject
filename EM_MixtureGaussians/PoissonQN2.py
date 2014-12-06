@@ -2,7 +2,7 @@ import numpy as np
 import numpy.linalg as la
 import math
 
-c = [552,703,454,180,84,23,4]
+
 
 
 def thetavector(gamma,t1,t2):
@@ -50,7 +50,7 @@ def M_(c,theta):
         tt1 += j*c[j]*w
         tt2 += j*c[j]*(1-w)
     
-    denom1 = sum(gam)
+    denom1 = np.sum(gam)
     denom2 = c_sum - denom1
     
     gam = gam/c_sum
@@ -242,62 +242,64 @@ def linesearch_secant(c,theta,d,alpha=1.0):
         F1 = F_(c,theta,d,a1)
         n = n+1
     return success, a1, n
-        
-theta0 = (0.3,1.0,1.5)
-theta = thetavector(*theta0)
-theta,_ = EM_(c,theta,maxit=5)
-S = np.matrix(np.zeros((3,3)))
-g = g_(c,theta)
-gt = gt_(c,theta)
-rg = conv(c,theta,g)
 
-linesearchiterations = 0
-
-maxit = 100
-t = 0
-print t,theta.T,g.T*d
-while t < maxit and rg >= 1e-6:
-    t=t+1
+def run():
+    c = [552,703,454,180,84,23,4]
+    theta0 = (0.3,1.0,1.5)
+    theta = thetavector(*theta0)
+    theta,_ = EM_(c,theta,maxit=5)
+    S = np.matrix(np.zeros((3,3)))
+    g = g_(c,theta)
+    gt = gt_(c,theta)
+    rg = conv(c,theta,g)
     
-    # step a)
-    d = gt - S*g
+    linesearchiterations = 0
     
-    # step b)
-    alpha = paramconstraint(theta,d)
-    foundalpha, alpha, iters = linesearch(c,theta,d,alpha)
-    #foundalpha, alpha, iters = linesearch_secant(c,theta,d,alpha)
-    linesearchiterations += iters
-    if foundalpha == False:
-        S = np.matrix(np.zeros((3,3)))
-        g = g_(c,theta)
-        gt = gt_(c,theta)
-        rg = conv(c,theta,g)
-    else:
-        dtheta = alpha*d
+    maxit = 100
+    t = 0
+    print t,theta.T
+    while t < maxit and rg >= 1e-6:
+        t=t+1
         
-        # step c)
-        dg = g_(c,theta+dtheta) - g
-        dgt = gt_(c,theta+dtheta) - gt
+        # step a)
+        d = gt - S*g
         
-        # step d)
-        dtstar = -dgt + S*dg
-        dS = dS_(dg,dtheta,dtstar)
-        
-        # step e)
-        theta = theta + dtheta
-        g = g + dg
-        gt = gt + dgt
-        S = S + dS
-        
-        rg = conv(c,theta,g)    
-    print t,theta.T,alpha,foundalpha
-print "total linesearch iterations:",linesearchiterations
-
-
-theta0 = (0.3,1.0,1.5)
-theta = thetavector(*theta0)
-#theta_EM,k = EM_(c,theta,maxit=100000)
-print "EM =",k,theta_EM.T    
+        # step b)
+        alpha = paramconstraint(theta,d)
+        foundalpha, alpha, iters = linesearch(c,theta,d,alpha)
+        #foundalpha, alpha, iters = linesearch_secant(c,theta,d,alpha)
+        linesearchiterations += iters
+        if foundalpha == False:
+            S = np.matrix(np.zeros((3,3)))
+            g = g_(c,theta)
+            gt = gt_(c,theta)
+            rg = conv(c,theta,g)
+        else:
+            dtheta = alpha*d
+            
+            # step c)
+            dg = g_(c,theta+dtheta) - g
+            dgt = gt_(c,theta+dtheta) - gt
+            
+            # step d)
+            dtstar = -dgt + S*dg
+            dS = dS_(dg,dtheta,dtstar)
+            
+            # step e)
+            theta = theta + dtheta
+            g = g + dg
+            gt = gt + dgt
+            S = S + dS
+            
+            rg = conv(c,theta,g)    
+        print t,theta.T,alpha,foundalpha
+    print "total linesearch iterations:",linesearchiterations
+    
+    
+    theta0 = (0.3,1.0,1.5)
+    theta = thetavector(*theta0)
+    #theta_EM,k = EM_(c,theta,maxit=100000)
+    #print "EM =",k,theta_EM.T    
 '''  
 print "################################"
   
