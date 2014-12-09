@@ -1,0 +1,371 @@
+\documentclass[letter,12pt]{article}
+\usepackage{verbatim}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\graphicspath{ {images/} }
+\usepackage{amssymb,amsmath,amsthm, graphicx}  
+\usepackage{hyperref}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption} 
+\usepackage{setspace}
+\usepackage{url}
+\usepackage{natbib}
+\usepackage[utf8]{inputenc}
+\usepackage[section]{algorithm,algpseudocode}
+\DeclareGraphicsExtensions{6f1.png,6f2.png}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand*\rfrac[2]{{}^{#1}\!/_{#2}}
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+\begin{document}
+\title{QN2: A Hybrid Quasi Newton Acceleration of the EM Algorithm}
+\author{Final Project\\CSCI-GA.2945 Numerical Optimization\\Justin Mao-Jones}
+\renewcommand{\today}{December 14, 2014}
+\maketitle
+
+\section{Introduction}
+
+In 1977, \citeauthor*{dempsterlr77} (henceforth abbreviated DLR) proposed the EM algorithm, which has since become, and continues to be, a popular method for computing maximum likelihood estimates from incomplete data.  \cite{wu1983} showed that under certain properties, the sequence of EM iterates converge to a unique maximum likelihood estimate.
+
+A drawback of the EM algorithm is its tendency towards slow convergence.  In certain practical applications, the EM algorithm has been shown to exhibit sublinear convergence.  For examples see \cite{lange1995a,jamshidianj93,jamshidianj97}.
+
+Modifications and extensions of the EM algorithm have been proposed to speed up convergence, and are often referred to as "accelerators".  In this project, I focus on the QN2 introduced by \cite{jamshidianj97}.  QN2 has been referred to as a Quasi Newton accelerator of the EM algorithm.  I explain the structure of the QN2 algorithm in relation to the underlying EM concepts and conventional Quasi Newton optimization concepts.  I then exhibit and discuss the results of an application of the QN2 algorithm to deriving MLE parameter estimates of a mixture of poissons.  \cite{jamshidianj97} applied QN2 to a mixture of 2 poissons.  I generalize this to a mixture of $n$ poissons.
+
+For the sake of the interested reader, I include the major steps of the derivation of both EM and QN2 algorithms.  An additional goal of this project is to present QN2 in such a way that a reader familiar with Quasi Newton methods, but with little experience in both EM and QN2 could understand the underlying theory and implement both the EM and QN2 algorithms.
+
+\section{EM Algorithm}
+
+The EM algorithm, otherwise known as expectation-maximization, is a method for computing the maximum likelihood parameter estimates from incomplete data.  Incomplete data is a set of data in which some or all observations contain variables with missing data.  
+
+To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=\{\vec{\theta}_1,...,\vec{\theta}_n\}$, where $\vec{\theta}_r$, where $r \in \{1,...,n\}$, is the vector of parameters $(\gamma_r,\lambda_r)^T$ of population $r$.  This construction is known as a mixture of poissons.  We seek to estimate $\theta$ using maximum likelihood.  We do not know which of the $n$ populations the observation $x_i$ corresponds to.  Let $z_i \in \{1,...,n\}$ denote the identity of the population that $x_i$ belongs to.  In this example, $\{x_1,...,x_m\}$ is incomplete data, $\{z_1,...,z_m\}$ is missing data, and $\{(x_1,z_1),...,(x_m,z_m)\}$ is the complete (unknown) data.
+
+The probability distribution of an incomplete observation $x_i$ conditional on $z_i$ is:
+\[
+p(x_i=j|z_i=r,\theta) = \frac{e^{-\lambda_r}\lambda_r^{j}}{j!}  
+\indent
+\lambda_r \geq 0
+\]
+The probability distribution of the missing data is:
+\[
+p(z_i=r|\theta) = \gamma_r
+\indent
+\text{where}
+\indent 
+\sum_{r=1}^{n}\gamma_r = 1
+\indent
+\text{and}
+\indent 
+0 \leq \gamma_r \leq 1
+\]
+The probability distribution of the complete data is:
+\begin{equation} \label{eq_constraint}
+p(x_i=j,z_i=r|\theta) 
+= p(x_i=j|z_i=r,\theta)p(z_i=r|\theta) = \gamma_r\frac{e^{-\lambda_r}\lambda_r^{j}}{j!}
+\end{equation}
+We wish to compute the maximum likelihood estimates, and so we begin with the log likelihood function, which is defined as:
+\[
+l(\theta) = log(\prod_{i=1}^{m}p(x_i|\theta)) = \sum_{i=1}^{m} log(p(x_i|\theta))
+\]
+This is the point at which a method such as the EM algorithm becomes useful.  Since $z_i$ are unobserved, solving for the roots of the derivative of $l(\theta)$ can be an intractable problem:
+\[
+\sum_{i=1}^{m} log(p(x_i|\theta)) = \sum_{i=1}^{m} log\left(\sum_{r=1}^{n}p(x_i,z_i|\theta))\right)
+\]
+Fortunately, $l(\theta)$ can be converted into a more manageable form.  Consider the probability distribution $p(\vec{z}|\vec{x},\phi)$.  Note that this function is parameterized by $\phi$ and not $\theta$.  Per the EM literature:
+\[
+l(\theta) = log(p(\vec{x}|\theta)) 
+= \int_{\vec{z}}p(\vec{z}|\vec{x},\phi)log(p(\vec{x}|\theta))d\vec{z}
+\]
+\[
+=
+E[log(p(\vec{x},\vec{z}|\theta))|\vec{x},\phi]
+-
+E[log(p(\vec{z}|\vec{x},\theta))|\vec{x},\phi]
+\]
+\begin{equation} \label{eq:QH}
+=Q(\theta|\phi)
+-H(\theta|\phi)
+\end{equation}
+
+where $Q(\theta|\phi)$ and $H(\theta|\phi)$ are defined as the left and right conditional expectations, respectively.  In the words of \cite{lange1995a}, this derivation can seem "slightly mysterious."  In order to shed some light on this result, I will show how it follows from our specific mixture of poissons problem.  We will use the following identity, which follows from the assumption that our observations are independent:
+\[
+1 = \int_{\vec{z}}p(\vec{z}|\vec{x},\phi)d\vec{z}
+= \prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
+\]
+The previous identity is true due to the identity $\int_{z_j}p(z_j|x_j,\phi)dz_j=1$.  Now, multiply $l(\theta)$ by $\int_{\vec{z}}p(\vec{z}|\vec{x},\vec{\phi})d\vec{z}=1$:
+\[
+l(\theta)
+= \left( \sum_{i=1}^{m} log(p(x_i|\theta)\right)
+\prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
+\]
+\[
+= \left( \sum_{i=1}^{m} \int p(z_i|x_i,\phi)log(p(x_i|\theta)dz_i\right)
+\prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
+=\sum_{i=1}^{m} \int p(z_i|x_i,\phi)log(p(x_i|\theta)dz_i
+\]
+The previous result was derived by putting the $i^{th}$ integral inside of the summation and the log inside of the integral.  Now we use Bayes' theorem to derive a useful result:
+\[
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi)log(p(x_i|\theta))dz_i
+= \sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(x_i,z_i|\theta)\frac{p(x_i|\theta)}{p(x_i,z_i|\theta)}\right) dz_i
+\]
+\[
+=
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(\frac{p(x_i,z_i|\theta)}{p(z_i|x_i,\theta)}\right) dz_i
+\]
+\[
+=
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(x_i,z_i|\theta)\right) dz_i
+-
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(z_i|x_i,\theta)\right) dz_i
+\] 
+\[
+=Q(\theta|\phi)
+-H(\theta|\phi)
+\]
+This result is useful, because $\nabla_{\theta}l(\theta)$ evaluated at $\theta = \phi$ makes $H(\theta|\phi)$ go to 0: 
+
+\[
+\nabla_{\theta}H(\theta|\phi)|_{\theta = \phi}
+=
+\nabla_{\theta}\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(z_i|x_i,\theta)\right) dz_i
+\]
+\[
+=
+\sum_{i=1}^{m} 
+\int p(z_i|x_i,\phi) 
+\nabla_{\theta}|_{\theta = \phi}
+log \left(p(z_i|x_i,\theta)\right) dz_i
+=
+\sum_{i=1}^{m} 
+\int \dfrac{p(z_i|x_i,\phi)}{p(z_i|x_i,\phi)} 
+\nabla_{\theta}|_{\theta = \phi}
+p(z_i|x_i,\theta) dz_i
+\]
+\[
+=
+\sum_{i=1}^{m} 
+\nabla_{\theta}|_{\theta = \phi}
+\int 
+p(z_i|x_i,\theta) dz_i
+=
+\sum_{i=1}^{m} 
+\nabla_{\theta}|_{\theta = \phi}
+1
+=0
+\]
+Thus, we have the following EM identity:
+\[
+\nabla_{\theta}l(\theta)|_{\theta = \phi}
+=
+\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}
+\]
+One way to think about this identity is that it shows where $\nabla_{\theta}l(\theta)|_{\theta = \phi}$ intersects with a more tractable function $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ in an extended parameter space.  The EM algorithm moves along this intersection in the hopes of finding a zero.
+
+This brings us to the specific steps of the EM algorithm, which works as follows.  Given an iterate $\theta_k$, the next iterate $\theta_{k+1}$ is defined as the $\theta$ that maximizes $Q(\theta|\phi)$ where $\phi$ is set to $\theta_k$.
+\[
+\theta_{k+1} = \argmax_{\theta}  Q(\theta|\theta_k) = M(\theta_k)
+\]
+The function $M(\theta_k)$ is known as the EM operator.  The algorithm begins with an initial parameter set $\theta_0$ and terminates when either $|M(\theta_k)-\theta_k|$ is small enough or a maximum number of iterations has been reached.
+
+
+\begin{algorithm}
+\caption{Expectation-Maximization}
+\label{em1}
+\begin{algorithmic}[1]
+\State Initialize $\theta_0$; Define \textbf{maxit}, \textbf{ftol}
+\State $k = 0$
+\While{$|M(\theta_k)-\theta_k|<$ \textbf{ftol}
+and $k < $ \textbf{maxit}}
+\State $k = k+1$
+\State $\theta_{k+1} = M(\theta_k)$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+\section{QN2 Algorithm}
+
+The QN2 Algorithm by \cite{jamshidianj97} is described as a Quasi Newton method using Broyden-Fletcher-Goldfarb-Shanno (BFGS) symmetric rank 2 updating.  It also uses Newton Lagrange method for mixture equality constraints, such as (\ref{eq_constraint}), though this is not explicitly mentioned in \cite{jamshidianj97}.  I will show how this is constructed.  Enforcement of the inequality constraints is explained in the next subsection. 
+
+To begin, we define the following:
+\begin{equation} \label{eq:define_g}
+g(\theta_k) = \nabla_{\theta}Q(\theta|\phi)|_{\theta =\theta_k, \phi = \theta_k}
+= \nabla_{\theta}Q(\theta_k|\theta_k)
+\end{equation}
+\begin{equation} \label{eq:define_gsquiggly}
+\tilde{g}(\theta_k) = M(\theta_k) - \theta_k
+\end{equation}
+The first function $g(\theta_k)$ is the gradient of $Q$ with respect to $\theta$ evaluated at $\theta = \theta_k$ and $\phi=\theta_k$.  To simplify notation, I re-write this as $\nabla_{\theta}Q(\theta_k|\theta_k)$.  Note that we will never take a derivative with respect to $\phi$ The second function is the would-be step size of the EM operator $M$.   
+
+\cite{jamshidianj93} showed the following property of the EM step:
+\begin{equation} \label{eq:ddq_approx}
+\tilde{g}(\theta_k) \approx -(\nabla^2_{\theta}Q(\hat{\theta}|\hat{\theta}))^{-1}g(\theta_k)
+\end{equation}
+where $\nabla^2_{\theta}Q$ is the Hessian of $Q$ and $\hat{\theta}$ is a local maximum of $l(\theta)$.  
+
+We are using a Quasi Newton method, and so would like to approximate  $(\nabla^2_{\theta}l(\theta))^{-1}$, the inverse Hessian of the log likelihood function, 
+\[
+(\nabla^2_{\theta}l(\theta))^{-1}
+=
+(\nabla^2_{\theta}Q(\theta|\phi))^{-1}
+-
+(\nabla^2_{\theta}H(\theta|\phi))^{-1}
+\]
+which, using equations (\ref{eq:QH}) and (\ref{eq:ddq_approx}), can be approximated as follows:
+\[
+(\nabla^2_{\theta}l(\theta))^{-1}g(\theta)
+\approx
+-\tilde{g}(\theta)
++
+Sg(\theta)
+\]
+where we define $S$ as a Quasi-Newton approximation to $-(\nabla^2_{\theta}H(\theta|\phi))^{-1}$.  This approximation will be used to define the Quasi-Newton update step.  Notice that this is a modification to the conventional Quasi-Newton method, because it contains a floating inverse Hessian approximation of $Q(\hat{\theta}|\hat{\theta})$.  The presumption here is that this floating value should aid the overall approximation of the inverse Hessian of the log likelihood, and thus speed up convergence.
+
+The resulting update step to $\theta_k$ defined below and assumes a line search methodology is used to determine $\alpha_k$, which is described in the next section.  For ease of reading, I make abbreviations such as $g_k = g(\theta_k)$.
+\[
+\theta_{k+1} = \theta_k - \alpha_k d_k
+\indent
+\text{where}
+\indent
+d_k = \tilde{g}_k(\theta_k) - S_kg(\theta_k)
+\]
+NOTE: \cite{jamshidianj97} p.575 contains an error in step a, which incorrectly defines $d_k=-\tilde{g}_k(\theta_k) + S_kg(\theta_k)$.
+
+\cite{jamshidianj97} point out that $d_k$ can be viewed as a modification to the EM step, which is why they label QN2 as an EM accelerator.
+
+It follows then that the BFGS update step is:
+\[
+\Delta S = 
+\left(
+1 + \frac{\Delta g_k^T \Delta \theta_k^*}{\Delta g_k^T \Delta \theta}
+\right)
+\frac{\Delta \theta_k \Delta \theta_k^T}{\Delta g_k \Delta \theta_k^T}
+-
+\frac{\Delta \theta_k^* \Delta \theta_k^T + (\Delta \theta_k^* \Delta \theta_k^T)^T}{\Delta g_k \Delta \theta_k^T}
+\]
+where
+\[
+\begin{array}{l}
+\Delta \theta_k^* = -\Delta \tilde{g_k} + S_k \Delta g_k \\
+\Delta \tilde{g}_k = \tilde{g}_{k+1} - \tilde{g}_{k} \\
+\Delta g_k = g_{k+1} - g_k
+\end{array}
+\]
+Note that $\theta_k^*$ is analogous to the term $B\Delta g_k$, where B is the inverse Hessian approximation of $(\nabla^2_{\theta}l(\theta))^{-1}$.  The BFGS update defined above is equal to $\Delta S$ due to relationship (\ref{eq:ddq_approx}).
+
+\subsection{Constraints}
+The problem of finding the maximum likelihood estimate is often a constrained optimization problem.  For example, in the mixture of poissons, we have the following constraints:
+\[
+\lambda_r \geq 0 \indent \indent
+0 \leq \gamma_r \leq 1 \indent \indent
+r \in \{1,...,n\}
+\]
+\[
+\sum_{r=1}^{n} \gamma_r = 1
+\]
+While I have not performed an exhaustive literature search and may very well be wrong, it seems there is a tendency in the literature to ignore all but the equality constraint.  The presumption then must be that in practical problems, the maximum likelihood estimate does not exist.  Using the mixture of poissons example, this would make sense.  $\lambda_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  Furthermore, should any of the constraints $0 \leq \gamma_r \leq 1$ be active, then the choice of $n$ populations of poissons would seem incorrect.
+
+In order to enforce the inequality parameter constraints, we use the following pseudo line search method:
+ 
+
+\begin{algorithm}
+\caption{Constraint Enforcement}
+\label{constraint_enforecement}
+\begin{algorithmic}[1]
+\State Given $\theta_k$, $d_k$
+\State $\alpha_k = 1$
+\While{$\theta_k + \alpha_k d_k$ violates constraints}
+\State $\alpha_k = \alpha_k / 2$
+\EndWhile
+\State return $\alpha_k$
+\end{algorithmic}
+\end{algorithm}
+
+The equality parameter constraint is handled by...
+
+\subsection{Line Search}
+
+\cite{jamshidianj97} use the line search described by \cite{jamshidianj93}, with initial step length equal to 2.  I will not refer to that here and instead use the Armijo and Wolfe sufficient increase conditions (i.e. the Strong Wolfe conditions) to perform the line search.  These steps are outlined below.  The step size $\alpha_k$ is initialized using the output from the constraint enforcement step (\ref{constraint_enforecement}) to ensure that all line search function evaluations occur within the feasible region.
+
+
+\begin{algorithm} 
+\caption{Armijo/Wolfe Line Search}
+\label{armijo_wolfe}
+\begin{algorithmic}[1]
+\State Given $\theta_k$
+\State $\alpha_k = <$constraint enforcement output$>$
+\State $\eta_s = 10^{-4}$
+\State $\eta_w = 0.99$
+\State $T = 10$
+\State $t = 0$
+\While{
+$l(\theta_k + \alpha_k d_k) - l(\theta_k) \geq \eta_s \alpha_k g_k^Td_k$
+and
+$g_k^Td_k \leq \eta_w g(\theta_k+\alpha_k d_k)^Td_k$
+and
+$t < T$
+}
+\State $\alpha_k = \alpha_k / 2$
+\State $t = t + 1$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+This line search runs until it either finds an $\alpha_k$ that satisfies the Strong Wolfe Conditions or else terminates if the number of line search attempts exceeds the maximum 10 attempts, in which case we consider the line search a failure.  If the line search fails, we "restart" QN2 by re-initializing $S$ to $S_0$.
+
+\subsection{Termination}
+
+\cite{jamshidianj97} use a "relative gradient" merit function proposed by \cite{khalfan93} shown below.
+\begin{equation}
+rg = \max_i
+\left[
+|g(\theta_k)|_i
+\frac
+{\max\{|\theta_k + \Delta \theta_k|_i,1\}}
+{max\{|l(\theta_k + \Delta \theta_k|),1\}}
+\right]
+< f_{tol}
+\end{equation}
+
+An alternative merit function is the 2-norm of $g_k$.
+
+\subsection{Initialization}
+
+Given an initial set of parameters $\theta_0$, \cite{jamshidianj93} recommend running a few iterations of EM before beginning QN2.  We do the same here.
+
+Since we already begin with a nonzero approximation of 
+
+\subsection{Algorithm Summary}
+
+For completion, I summarize the individual steps of my implementation of the QN2 algorithm below.
+
+
+\begin{algorithm} 
+\caption{QN2 Implementation}
+\label{qn2_algo}
+\begin{algorithmic}[1]
+\State Given $\theta_k$
+\State $\alpha_k = <$constraint enforcement output$>$
+\State $\eta_s = 10^{-4}$
+\State $\eta_w = 0.99$
+\State $T = 10$
+\State $t = 0$
+\While{
+$l(\theta_k + \alpha_k d_k) - l(\theta_k) \geq \eta_s \alpha_k g_k^Td_k$
+and
+$g_k^Td_k \leq \eta_w g(\theta_k+\alpha_k d_k)^Td_k$
+and
+$t < T$
+}
+\State $\alpha_k = \alpha_k / 2$
+\State $t = t + 1$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+\bibliographystyle{plainnat}
+\bibliography{references.bib}
+\end{document}
