@@ -42,10 +42,19 @@
 	pages = "569-587"
 }
 @article{khalfan93,
-	author = "Someone Khalfan, H. F. and Byrd, R. H.  and Schnabel, R. B.",
+	author = "Khalfan, H. F. and Byrd, R. H.  and Schnabel, R. B.",
 	title = "A theoretical and experimental study of the symmetric rank-one update",
 	year = "1993",
 	journal = "SIAM Journal of Optimization",
 	Number = "3",
 	pages = "1-24"
+}
+@book{nocedalwright_BFGS,
+	author = "Jorge Nocedal and Stephen J. Wright",
+	title = "Numerical Optimization",
+	edition = "2"
+	year = "2006",
+	publisher = "Springer",
+	address = "New York, NY"
+	pages = "136-140"
 }

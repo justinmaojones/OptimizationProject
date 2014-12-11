@@ -1,3 +1,15 @@
+import pickle
+
+def pickleIt(pyName, outputName):
+    output = open(outputName+'.pk1', 'wb')
+    pickle.dump(pyName, output)
+    output.close()
+
+def pickleLoad(inputName):
+    pk1_file = open(inputName+'.pk1', 'rb')
+    pyObj = pickle.load(pk1_file)
+    return pyObj
+    
 
 
 def formatfloats(x):

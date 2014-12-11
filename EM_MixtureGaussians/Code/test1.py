@@ -40,7 +40,7 @@ print "lambdas =",np.round(lambdas,2)
 
 print "############################"
 print "EM Results"
-em_gammas,em_thetas,k,rg1,Log1 = qn2.EM_(
+(em_gammas,em_thetas,k,rg1,Log1,converged),_ = qn2.EM_(
                                 c,gammas0,thetas0,
                                 maxit=100,
                                 printing=False)
@@ -52,7 +52,7 @@ print "merit  =",rg1
 
 print "############################"
 print "QN Results"
-qn_gammas,qn_thetas,k,rg2,Log2 = qn2.QN2(
+(qn_gammas,qn_thetas,k,rg2,Log2,converged),_ = qn2.QN2(
                                 c,gammas0,thetas0,
                                 maxit=20,
                                 printing=True)

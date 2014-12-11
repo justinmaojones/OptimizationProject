@@ -1,4 +1,4 @@
-\begin{thebibliography}{6}
+\begin{thebibliography}{7}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -31,6 +31,11 @@ H.~F. Khalfan, R.~H. Byrd, and R.~B. Schnabel.
 Kenneth Lange.
 \newblock A quasi newton acceleration of the em algorithm.
 \newblock \emph{Statist. Sin.}, 5:\penalty0 1--18, 1995.
+
+\bibitem[Nocedal and Wright()]{nocedalwright_BFGS}
+Jorge Nocedal and Stephen~J. Wright.
+\newblock \emph{Numerical Optimization}.
+\newblock 2nd edition.
 
 \bibitem[Wu(1983)]{wu1983}
 C.~F.~Jeff Wu.

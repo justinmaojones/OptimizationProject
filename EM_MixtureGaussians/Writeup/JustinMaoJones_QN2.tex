@@ -14,7 +14,8 @@
 \usepackage{url}
 \usepackage{natbib}
 \usepackage[utf8]{inputenc}
-\usepackage[section]{algorithm,algpseudocode}
+\usepackage[section]{algorithm}
+\usepackage{algpseudocode}
 \DeclareGraphicsExtensions{6f1.png,6f2.png}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \newcommand*\rfrac[2]{{}^{#1}\!/_{#2}}
@@ -24,7 +25,7 @@
 \setlength{\textwidth}{6.25in}
 \begin{document}
 \title{QN2: A Hybrid Quasi Newton Acceleration of the EM Algorithm}
-\author{Final Project\\CSCI-GA.2945 Numerical Optimization\\Justin Mao-Jones}
+\author{Final Project\\CSCI-GA.2945 Numerical Optimization\\Justin Mao-Jones\\New York University}
 \renewcommand{\today}{December 14, 2014}
 \maketitle
 
@@ -36,7 +37,7 @@ A drawback of the EM algorithm is its tendency towards slow convergence.  In cer
 
 Modifications and extensions of the EM algorithm have been proposed to speed up convergence, and are often referred to as "accelerators".  In this project, I focus on the QN2 introduced by \cite{jamshidianj97}.  QN2 has been referred to as a Quasi Newton accelerator of the EM algorithm.  I explain the structure of the QN2 algorithm in relation to the underlying EM concepts and conventional Quasi Newton optimization concepts.  I then exhibit and discuss the results of an application of the QN2 algorithm to deriving MLE parameter estimates of a mixture of poissons.  \cite{jamshidianj97} applied QN2 to a mixture of 2 poissons.  I generalize this to a mixture of $n$ poissons.
 
-For the sake of the interested reader, I include the major steps of the derivation of both EM and QN2 algorithms.  An additional goal of this project is to present QN2 in such a way that a reader familiar with Quasi Newton methods, but with little experience in both EM and QN2 could understand the underlying theory and implement both the EM and QN2 algorithms.
+For the sake of the interested reader, I include the major steps of the derivation of both EM and QN2 algorithms.  An additional goal of this project is to present QN2 in such a way that a reader familiar with Quasi Newton methods, but with little experience in either EM and QN2 could understand the underlying theory and implement both the EM and QN2 algorithms.
 
 \section{EM Algorithm}
 
@@ -174,7 +175,7 @@ The function $M(\theta_k)$ is known as the EM operator.  The algorithm begins wi
 
 \begin{algorithm}
 \caption{Expectation-Maximization}
-\label{em1}
+\label{alg:em}
 \begin{algorithmic}[1]
 \State Initialize $\theta_0$; Define \textbf{maxit}, \textbf{ftol}
 \State $k = 0$
@@ -236,25 +237,55 @@ NOTE: \cite{jamshidianj97} p.575 contains an error in step a, which incorrectly 
 
 \cite{jamshidianj97} point out that $d_k$ can be viewed as a modification to the EM step, which is why they label QN2 as an EM accelerator.
 
-It follows then that the BFGS update step is:
+The BFGS update is then derived as follows.  Using the notation used by \cite{jamshidianj97}, define:
 \[
-\Delta S = 
+\begin{array}{l}
+\Delta \tilde{g}_k = \tilde{g}_{k+1} - \tilde{g}_{k} \\
+\Delta g_k = g_{k+1} - g_k
+\end{array}
+\]
+The classic BFGS update of the inverse Hessian is (see \cite{nocedalwright_BFGS}, p. 136-140):
+\[
+H_{k+1} = (I - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k})H_k(I-\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k})+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^t\Delta \theta_k}
+\]
+\[
+= H_k - H_k\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k}H_k + \frac{\Delta \theta_k\Delta g_k^TH_k\Delta g_k\Delta \theta_k^T}{(\Delta g_k^T\Delta \theta_k)^2}+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
+\]
+Thus,
+\[
+\Delta H_k = H_{k+1} - H_k
+= (1+\frac{\Delta g_k^TH_k\Delta g_k}{\Delta g_k^T\Delta \theta_k})\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^TH_k + (\Delta \theta_k\Delta g_k^TH_k)^T}{\Delta g_k^T\Delta \theta_k}
+\]
+If we construct the inverse Hessian approximation as
+\[
+H_k = (\nabla^2_{\theta}Q(\hat{\theta}|\hat{\theta}))^{-1} + S_k
+\]
+then, using Eqn (\ref{eq:ddq_approx}), it follows that
+\[\begin{array}{c}
+H_k  g_k =  -\tilde{g}_k + S_kg_k
+\\
+H_k  g_{k+1} = -\tilde{g}_{k+1} + S_kg_k
+\\
+H_k \Delta g_k = -\Delta \tilde{g}_k + S_k\Delta g_k
+\end{array}\
+\]
+The QN2 BFGS update step is:
+\begin{equation} \label{eq:BFGS}
+\Delta S_k = H_{k+1} - H_k =
 \left(
 1 + \frac{\Delta g_k^T \Delta \theta_k^*}{\Delta g_k^T \Delta \theta}
 \right)
 \frac{\Delta \theta_k \Delta \theta_k^T}{\Delta g_k \Delta \theta_k^T}
 -
 \frac{\Delta \theta_k^* \Delta \theta_k^T + (\Delta \theta_k^* \Delta \theta_k^T)^T}{\Delta g_k \Delta \theta_k^T}
-\]
+\end{equation}
 where
 \[
-\begin{array}{l}
-\Delta \theta_k^* = -\Delta \tilde{g_k} + S_k \Delta g_k \\
-\Delta \tilde{g}_k = \tilde{g}_{k+1} - \tilde{g}_{k} \\
-\Delta g_k = g_{k+1} - g_k
-\end{array}
+\Delta \theta_k^* = -\Delta \tilde{g_k} + S_k \Delta g_k
 \]
-Note that $\theta_k^*$ is analogous to the term $B\Delta g_k$, where B is the inverse Hessian approximation of $(\nabla^2_{\theta}l(\theta))^{-1}$.  The BFGS update defined above is equal to $\Delta S$ due to relationship (\ref{eq:ddq_approx}).
+
+As will be seen in the next section, it is important to initialize $S_0$ to $\boldsymbol{0}$.
+
 
 \subsection{Constraints}
 The problem of finding the maximum likelihood estimate is often a constrained optimization problem.  For example, in the mixture of poissons, we have the following constraints:
@@ -266,14 +297,16 @@ r \in \{1,...,n\}
 \[
 \sum_{r=1}^{n} \gamma_r = 1
 \]
-While I have not performed an exhaustive literature search and may very well be wrong, it seems there is a tendency in the literature to ignore all but the equality constraint.  The presumption then must be that in practical problems, the maximum likelihood estimate does not exist.  Using the mixture of poissons example, this would make sense.  $\lambda_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  Furthermore, should any of the constraints $0 \leq \gamma_r \leq 1$ be active, then the choice of $n$ populations of poissons would seem incorrect.
+While I have not performed an exhaustive literature search and may very well be wrong, it seems there is a tendency in the literature to ignore all but the equality constraint.  The presumption then must be that in practical problems, the maximum likelihood estimate exists strictly inside the feasible region.  
+
+In the mixture of poissons example, this would make sense.  $\lambda_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  $\gamma_r$ cannot become zero, because, as will be shown later, the derivative would go to infinity.  Similarly, $\gamma_r$ cannot become $1$ either, since a value of $1$ in any $\gamma_r$ would imply a zero in the other $\gamma$'s.
 
 In order to enforce the inequality parameter constraints, we use the following pseudo line search method:
  
 
 \begin{algorithm}
 \caption{Constraint Enforcement}
-\label{constraint_enforecement}
+\label{alg:constraint_enforecement}
 \begin{algorithmic}[1]
 \State Given $\theta_k$, $d_k$
 \State $\alpha_k = 1$
@@ -284,7 +317,7 @@ In order to enforce the inequality parameter constraints, we use the following p
 \end{algorithmic}
 \end{algorithm}
 
-The equality parameter constraint is handled by...
+The equality parameter constraint is handled by 
 
 \subsection{Line Search}
 
@@ -292,8 +325,8 @@ The equality parameter constraint is handled by...
 
 
 \begin{algorithm} 
-\caption{Armijo/Wolfe Line Search}
-\label{armijo_wolfe}
+\caption{Strong Wolfe (i.e. Armijo/Wolfe) Line Search}
+\label{alg:armijo_wolfe}
 \begin{algorithmic}[1]
 \State Given $\theta_k$
 \State $\alpha_k = <$constraint enforcement output$>$
@@ -311,6 +344,12 @@ $t < T$
 \State $\alpha_k = \alpha_k / 2$
 \State $t = t + 1$
 \EndWhile
+\If{$t < T$}
+\State	foundalpha = True
+\Else
+\State  foundalpha = False
+\EndIf
+\State return $\alpha_k$, foundalpha
 \end{algorithmic}
 \end{algorithm}
 
@@ -319,7 +358,7 @@ This line search runs until it either finds an $\alpha_k$ that satisfies the Str
 \subsection{Termination}
 
 \cite{jamshidianj97} use a "relative gradient" merit function proposed by \cite{khalfan93} shown below.
-\begin{equation}
+\begin{equation} \label{eq:rg}
 rg = \max_i
 \left[
 |g(\theta_k)|_i
@@ -340,32 +379,56 @@ Since we already begin with a nonzero approximation of
 
 \subsection{Algorithm Summary}
 
-For completion, I summarize the individual steps of my implementation of the QN2 algorithm below.
-
+For completion, I summarize the major steps of my implementation of the QN2 algorithm below.
 
 \begin{algorithm} 
 \caption{QN2 Implementation}
-\label{qn2_algo}
+\label{alg:qn2}
 \begin{algorithmic}[1]
-\State Given $\theta_k$
-\State $\alpha_k = <$constraint enforcement output$>$
-\State $\eta_s = 10^{-4}$
-\State $\eta_w = 0.99$
-\State $T = 10$
-\State $t = 0$
+\State Given $\theta_0$
+\State Define maxit
+\State Define $f_{tol}$
+\State $\theta$ = EM($\theta_0$; $6$ iterations)
+\indent \indent  \indent\indent \indent \indent \indent \indent  \textit{Algorithm (\ref{alg:em})}
+\State $g = g(\theta)$
+\indent \indent \indent \indent \indent \indent\indent \indent \indent \indent \indent \space \space \space \textit{Eqn (\ref{eq:define_g})}
+\State $\tilde{g} = \tilde{g}(\theta)$
+\indent \indent \indent \indent \indent \indent\indent \indent \indent \indent \indent \space \space \space \textit{Eqn (\ref{eq:define_gsquiggly})}
+\State $S = \boldsymbol{0}$
+\State $rg = rg(\theta)$
+\indent \indent \indent \indent \indent \indent\indent \indent \indent \indent \indent  \textit{Eqn (\ref{eq:rg})}
+\State $k = 0$
 \While{
-$l(\theta_k + \alpha_k d_k) - l(\theta_k) \geq \eta_s \alpha_k g_k^Td_k$
-and
-$g_k^Td_k \leq \eta_w g(\theta_k+\alpha_k d_k)^Td_k$
-and
-$t < T$
-}
-\State $\alpha_k = \alpha_k / 2$
-\State $t = t + 1$
+$rg \geq f_{tol}$ and $k <$ maxit}
+\State $k = k + 1$
+\State $d = \tilde{g} - Sg$
+\State $\alpha = $ ConstraintEnforcement($\theta,d$) 
+\indent \indent \indent \indent \indent \space \space \textit{Algorithm (\ref{alg:constraint_enforecement})}
+\State $\alpha$, foundalpha = StrongWolfeLineSearch($\theta,d,\alpha$) 
+\indent \indent \textit{Algorithm (\ref{alg:armijo_wolfe})}
+\If{foundalpha == True}
+\State $\Delta\theta = \alpha d$
+\State $\Delta g = g(\theta+\Delta\theta) - g$
+\State $\Delta \tilde{g} = \tilde{g}(\theta + \Delta\theta) - \tilde{g}$
+\State $\Delta \theta^* = \tilde{g} - Sg$
+\State $\Delta S = $ BFGS Update 
+\indent \indent \indent \indent \indent \indent \indent \space \space \textit{Eqn (\ref{eq:BFGS})}
+\State $\theta = \theta + \Delta\theta$
+\State $rg = rg(\theta,g)$
+\State $g = g+\Delta g$
+\State $\tilde{g} = \tilde{g}+\Delta \tilde{g}$
+\State $S = S +\Delta S$
+\Else
+\State $S = \boldsymbol{0}$
+\EndIf
 \EndWhile
 \end{algorithmic}
 \end{algorithm}
 
+
+Some more stuff
+
+\pagebreak
 \bibliographystyle{plainnat}
 \bibliography{references.bib}
 \end{document}
