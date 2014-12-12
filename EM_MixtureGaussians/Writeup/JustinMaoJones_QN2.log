@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.10.30)  11 DEC 2014 17:38
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.10.30)  12 DEC 2014 03:39
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -698,34 +698,43 @@ it/12 log\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 p\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 x
 [3]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 177.
- [4] [5]
+ [4] [5] [6]
+Overfull \hbox (5.72311pt too wide) detected at line 388
+\OT1/cmr/m/n/12 ^^A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ^^A\OML/cmm/m/it/12 ^^
+R[]u \OT1/cmr/m/n/12 = [] ^^A\OML/cmm/m/it/12 ^^R[]u[][][] []\OT1/cmr/m/n/12 [(
+^^A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ^^A\OML/cmm/m/it/12 ^^R[]u\OT1/cmr/m/n
+/12 )[]][] = ^^A\OML/cmm/m/it/12 ^^R[]u []\OT1/cmr/m/n/12 [^^A\OML/cmm/m/it/12 
+^^M[]\OT1/cmr/m/n/12 ][] = 0
+ []
 
-LaTeX Warning: Reference `constraint_enforecement' on page 6 undefined on input
- line 324.
 
-[6] [7] [8] (./JustinMaoJones_QN2.bbl)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 434.
- [9]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 434.
+Overfull \hbox (24.97336pt too wide) detected at line 407
+\OT1/cmr/m/n/12 ^^A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ^^A[][]\OML/cmm/m/it/1
+2 u \OT1/cmr/m/n/12 = [] ^^A[][]\OML/cmm/m/it/12 u[][][] []\OT1/cmr/m/n/12 [(^^
+A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ^^A[][]\OML/cmm/m/it/12 u\OT1/cmr/m/n/12
+ )[]][] = ^^A[][]\OML/cmm/m/it/12 u []\OT1/cmr/m/n/12 [^^A\OML/cmm/m/it/12 ^^M[
+]\OT1/cmr/m/n/12 ][] = 0
+ []
+
+[7] [8] [9] [10] [11] (./JustinMaoJones_QN2.bbl)
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 697.
+ [12]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 697.
  (./JustinMaoJones_QN2.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 434.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 434.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 697.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 697.
 Package rerunfilecheck Info: File `JustinMaoJones_QN2.out' has not changed.
-(rerunfilecheck)             Checksum: 6D623733ACCCD6ED611B4DC1109B8C31;451.
-
-
-LaTeX Warning: There were undefined references.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 434.
+(rerunfilecheck)             Checksum: 1811C8D40DEA120EFC038AEE754DF47D;529.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 697.
  ) 
 Here is how much of TeX's memory you used:
- 9343 strings out of 495028
- 136735 string characters out of 6181496
- 237788 words of memory out of 5000000
- 12375 multiletter control sequences out of 15000+600000
+ 9363 strings out of 495028
+ 136987 string characters out of 6181496
+ 234100 words of memory out of 5000000
+ 12383 multiletter control sequences out of 15000+600000
  16202 words of font info for 63 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 36i,8n,38p,901b,441s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 36i,11n,38p,861b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texl
@@ -738,10 +747,10 @@ msfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
 cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cms
 y8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb
 >
-Output written on JustinMaoJones_QN2.pdf (9 pages, 168737 bytes).
+Output written on JustinMaoJones_QN2.pdf (12 pages, 181695 bytes).
 PDF statistics:
- 206 PDF objects out of 1000 (max. 8388607)
- 181 compressed objects within 2 object streams
- 37 named destinations out of 1000 (max. 500000)
- 65 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 248 PDF objects out of 1000 (max. 8388607)
+ 219 compressed objects within 3 object streams
+ 49 named destinations out of 1000 (max. 500000)
+ 73 words of extra memory for PDF output out of 10000 (max. 10000000)
 

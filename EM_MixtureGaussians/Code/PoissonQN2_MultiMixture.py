@@ -116,7 +116,7 @@ def dQ_(C,theta):
     wcJ_sum = np.sum(wc*J,axis=1)
     c_sum = C.sum
 
-    dgammas = wc_sum/gammas - c_sum
+    dgammas = wc_sum/gammas - c_sum #c_sum = lambda*
     dthetas = wcJ_sum/thetas - wc_sum
     return theta_matrix(dgammas,dthetas)
 

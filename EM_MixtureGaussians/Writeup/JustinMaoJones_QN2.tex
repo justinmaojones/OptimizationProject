@@ -43,7 +43,7 @@ For the sake of the interested reader, I include the major steps of the derivati
 
 The EM algorithm, otherwise known as expectation-maximization, is a method for computing the maximum likelihood parameter estimates from incomplete data.  Incomplete data is a set of data in which some or all observations contain variables with missing data.  
 
-To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=\{\vec{\theta}_1,...,\vec{\theta}_n\}$, where $\vec{\theta}_r$, where $r \in \{1,...,n\}$, is the vector of parameters $(\gamma_r,\lambda_r)^T$ of population $r$.  This construction is known as a mixture of poissons.  We seek to estimate $\theta$ using maximum likelihood.  We do not know which of the $n$ populations the observation $x_i$ corresponds to.  Let $z_i \in \{1,...,n\}$ denote the identity of the population that $x_i$ belongs to.  In this example, $\{x_1,...,x_m\}$ is incomplete data, $\{z_1,...,z_m\}$ is missing data, and $\{(x_1,z_1),...,(x_m,z_m)\}$ is the complete (unknown) data.
+To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=(\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n)^T$, where $\gamma_r$ and $\lambda_r$ are the parameters of population $r$.  This construction is known as a mixture of poissons.  We seek to estimate $\theta$ using maximum likelihood.  We do not know which of the $n$ populations the observation $x_i$ corresponds to.  Let $z_i \in \{1,...,n\}$ denote the identity of the population that $x_i$ belongs to.  In this example, $\{x_1,...,x_m\}$ is incomplete data, $\{z_1,...,z_m\}$ is missing data, and $\{(x_1,z_1),...,(x_m,z_m)\}$ is the complete (unknown) data.
 
 The probability distribution of an incomplete observation $x_i$ conditional on $z_i$ is:
 \[
@@ -159,11 +159,11 @@ p(z_i|x_i,\theta) dz_i
 =0
 \]
 Thus, we have the following EM identity:
-\[
+\begin{equation} \label{eq:dl_is_dq}
 \nabla_{\theta}l(\theta)|_{\theta = \phi}
 =
 \nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}
-\]
+\end{equation}
 One way to think about this identity is that it shows where $\nabla_{\theta}l(\theta)|_{\theta = \phi}$ intersects with a more tractable function $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ in an extended parameter space.  The EM algorithm moves along this intersection in the hopes of finding a zero.
 
 This brings us to the specific steps of the EM algorithm, which works as follows.  Given an iterate $\theta_k$, the next iterate $\theta_{k+1}$ is defined as the $\theta$ that maximizes $Q(\theta|\phi)$ where $\phi$ is set to $\theta_k$.
@@ -211,9 +211,9 @@ We are using a Quasi Newton method, and so would like to approximate  $(\nabla^2
 \[
 (\nabla^2_{\theta}l(\theta))^{-1}
 =
-(\nabla^2_{\theta}Q(\theta|\phi))^{-1}
+(\nabla^2_{\theta}Q(\theta|\phi)
 -
-(\nabla^2_{\theta}H(\theta|\phi))^{-1}
+\nabla^2_{\theta}H(\theta|\phi))^{-1}
 \]
 which, using equations (\ref{eq:QH}) and (\ref{eq:ddq_approx}), can be approximated as follows:
 \[
@@ -223,7 +223,11 @@ which, using equations (\ref{eq:QH}) and (\ref{eq:ddq_approx}), can be approxima
 +
 Sg(\theta)
 \]
-where we define $S$ as a Quasi-Newton approximation to $-(\nabla^2_{\theta}H(\theta|\phi))^{-1}$.  This approximation will be used to define the Quasi-Newton update step.  Notice that this is a modification to the conventional Quasi-Newton method, because it contains a floating inverse Hessian approximation of $Q(\hat{\theta}|\hat{\theta})$.  The presumption here is that this floating value should aid the overall approximation of the inverse Hessian of the log likelihood, and thus speed up convergence.
+where we define $S$ as a Quasi-Newton approximation to
+\[
+(\nabla^2_{\theta}l(\theta))^{-1}-(\nabla^2_{\theta}Q(\hat{\theta}|\hat{\theta}))^{-1}
+\]
+This approximation will be used to define the Quasi-Newton update step.  Notice that this is a modification to the conventional Quasi-Newton method, because it contains a floating inverse Hessian approximation of $Q(\hat{\theta}|\hat{\theta})$.  The presumption here is that this floating value should aid the overall approximation of the inverse Hessian of the log likelihood, and thus speed up convergence.
 
 The resulting update step to $\theta_k$ defined below and assumes a line search methodology is used to determine $\alpha_k$, which is described in the next section.  For ease of reading, I make abbreviations such as $g_k = g(\theta_k)$.
 \[
@@ -246,7 +250,7 @@ The BFGS update is then derived as follows.  Using the notation used by \cite{ja
 \]
 The classic BFGS update of the inverse Hessian is (see \cite{nocedalwright_BFGS}, p. 136-140):
 \[
-H_{k+1} = (I - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k})H_k(I-\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k})+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^t\Delta \theta_k}
+H_{k+1} = (I - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k})H_k(I-\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k})+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
 \]
 \[
 = H_k - H_k\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k}H_k + \frac{\Delta \theta_k\Delta g_k^TH_k\Delta g_k\Delta \theta_k^T}{(\Delta g_k^T\Delta \theta_k)^2}+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
@@ -275,31 +279,31 @@ The QN2 BFGS update step is:
 \left(
 1 + \frac{\Delta g_k^T \Delta \theta_k^*}{\Delta g_k^T \Delta \theta}
 \right)
-\frac{\Delta \theta_k \Delta \theta_k^T}{\Delta g_k \Delta \theta_k^T}
+\frac{\Delta \theta_k \Delta \theta_k^T}{\Delta g_k^T \Delta \theta_k}
 -
-\frac{\Delta \theta_k^* \Delta \theta_k^T + (\Delta \theta_k^* \Delta \theta_k^T)^T}{\Delta g_k \Delta \theta_k^T}
+\frac{\Delta \theta_k^* \Delta \theta_k^T + (\Delta \theta_k^* \Delta \theta_k^T)^T}{\Delta g_k^T \Delta \theta_k}
 \end{equation}
 where
 \[
 \Delta \theta_k^* = -\Delta \tilde{g_k} + S_k \Delta g_k
 \]
-
 As will be seen in the next section, it is important to initialize $S_0$ to $\boldsymbol{0}$.
 
 
 \subsection{Constraints}
 The problem of finding the maximum likelihood estimate is often a constrained optimization problem.  For example, in the mixture of poissons, we have the following constraints:
 \[
-\lambda_r \geq 0 \indent \indent
-0 \leq \gamma_r \leq 1 \indent \indent
+(\lambda_k)_r \geq 0 \indent \indent
+0 \leq (\gamma_k)_r \leq 1 \indent \indent
 r \in \{1,...,n\}
 \]
-\[
-\sum_{r=1}^{n} \gamma_r = 1
-\]
-While I have not performed an exhaustive literature search and may very well be wrong, it seems there is a tendency in the literature to ignore all but the equality constraint.  The presumption then must be that in practical problems, the maximum likelihood estimate exists strictly inside the feasible region.  
+\begin{equation} \label{eqn:equalityconstraint}
+\sum_{r=1}^{n} (\gamma_k)_r = 1
+\end{equation}
 
-In the mixture of poissons example, this would make sense.  $\lambda_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  $\gamma_r$ cannot become zero, because, as will be shown later, the derivative would go to infinity.  Similarly, $\gamma_r$ cannot become $1$ either, since a value of $1$ in any $\gamma_r$ would imply a zero in the other $\gamma$'s.
+Here $(\lambda_k)_r$ and $(\gamma_k)_r$ are defined as the $\lambda$ and $\gamma$ parameters, respectively, of population $r$ at iteration $k$.  While I have not performed an exhaustive literature search, it seems there is a tendency in the literature to ignore all but the equality constraint.  The presumption then must be that in practical problems, the maximum likelihood estimate exists strictly inside the feasible region.  
+
+In the mixture of poissons example, this would make sense.  $(\lambda_k)_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  $(\gamma_k)_r$ cannot become zero, because, as will be shown later, the derivative would go to infinity.  Similarly, $(\gamma_k)_r$ cannot become $1$ either, since a value of $1$ in any $(\gamma_k)_r$ would imply a zero in the other $\gamma$'s.
 
 In order to enforce the inequality parameter constraints, we use the following pseudo line search method:
  
@@ -317,11 +321,262 @@ In order to enforce the inequality parameter constraints, we use the following p
 \end{algorithmic}
 \end{algorithm}
 
-The equality parameter constraint is handled by 
+The equality parameter constraint can be handled by appropriate initialization of $\theta_0$ and $S_0$.  To explain why, consider that at iteration $k$, we assume the relationship $\sum_{r=1}^{n}[\gamma_{k}]_r=1$ holds.  Then, in order for Eqn (\ref{eqn:equalityconstraint}) to be satisfied at each successive iteration $k+1$, the step along the $\gamma$ parameters $\Delta \gamma_k = \gamma_{k+1} - \gamma_k = \alpha_k(d_k)_{\gamma}$ must satisfy the relationship
+\begin{equation} \label{eq:gammastepzero}
+\sum_{r=1}^{n} [\Delta \gamma_k]_r
+=
+\sum_{r=1}^{n}[\gamma_{k+1}]_r - [\gamma_k]_r
+= 0
+\end{equation}
+Thus, $\sum_{r=1}^{n}[\gamma_{k+1}]_r=1$ if and only if $\sum_{r=1}^{n} [\Delta \gamma_k]_r = 0$.  In order for this to be true, it must be true that:
+\begin{equation} \label{eq:dstepzero}
+\sum_{r=1}^{n} [(d_k)_{\gamma}]_r
+=
+\sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r - [(S_kg_k)_{\gamma}]_r = 0
+\end{equation}
+First, assume that the following is true for $S_{k}$ and any vector $v \in \Re^{2n}$:
+\begin{equation} \label{eqn:Sgzero}
+\sum_{r=1}^{n} [(S_{k}v)_{\gamma}]_r = 0
+\end{equation}
+Second, consider $\sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r$:
+\begin{equation} \label{eq:gsquigglyzero}
+\sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r
+=
+\sum_{r=1}^{n} [(M(\theta_k) - \theta_k)_{\gamma}]_r
+=
+\sum_{r=1}^{n} [(M(\theta_k))_{\gamma}]_r - \sum_{r=1}^{n} [\gamma_k]_r = 1 - 1 = 0
+\end{equation}
+which holds true for all $k$.  By definition, $M(\theta_k)$ is another estimate of $\theta$ that satisfies all parameter constraints.  An explicit example of $M(\theta_k)$ is provided in section ..............  
+
+By assumption (\ref{eqn:Sgzero}) and Eqn (\ref{eq:gsquigglyzero}), Eqn (\ref{eq:dstepzero}) holds true, and thus Eqn (\ref{eq:gammastepzero}) holds for $k$.  However, this does not yet prove that Eqn (\ref{eq:gammastepzero}) will hold for iteration $k+1$ or any other subsequent iterations.  
+
+Thus, now we need to show that:
+\begin{equation} \label{eq:dpluszero}
+\sum_{r=1}^{n} [(d_{k+1})_{\gamma}]_r
+=
+\sum_{r=1}^{n} [(\tilde{g}_{k+1})_{\gamma}]_r - [(S_{k+1}g_{k+1})_{\gamma}]_r = 0
+\end{equation}
+Eqn (\ref{eq:gsquigglyzero}) implies that:
+\[
+\sum_{r=1}^{n} [(\tilde{g}_{k+1})_{\gamma}]_r = 0
+\]
+And so all that is left is to show that:
+\[
+0 = \sum_{r=1}^{n} [(S_{k+1}g_{k+1})_{\gamma}]_r 
+= \sum_{r=1}^{n} [((S_{k}+\Delta S_k)g_{k+1})_{\gamma}]_r
+=\sum_{r=1}^{n} [(S_{k}g_{k+1})_{\gamma}]_r
++\sum_{r=1}^{n} [(\Delta S_kg_{k+1})_{\gamma}]_r
+\]
+By the assumption in Eqn (\ref{eqn:Sgzero}), we already have that $\sum_{r=1}^{n} [(S_{k}g_{k+1})_{\gamma}]_r=0$.  Thus, to show that $\sum_{r=1}^{n} [(\Delta S_kg_{k+1})_{\gamma}]_r=0$, we need to evaluate the BFGS update, which has three matrix terms: $\Delta \theta_k \Delta \theta_k^T, \Delta \theta_k \Delta {\theta_k^*}^T,$ and $\Delta \theta_k^* \Delta \theta_k^T$.  Consider any vector $u \in \Re^{2n}$
+\[
+\Delta \theta_k\Delta \theta_k^Tu = 
+\left[
+\begin{array}{cc}
+\Delta \gamma_k 
+\\
+\Delta \lambda_k 
+\end{array}
+\right]
+\Delta \theta_k^Tu
+\indent
+\text{which implies}
+\indent
+\sum_{r=1}^{n} [(\Delta \theta_k\Delta \theta_k^Tu)_{\gamma}]_r 
+=
+\Delta \theta_k^Tu\sum_{r=1}^{n} [\Delta \gamma_k]_r
+= 0
+\]
+\[
+\Delta \theta_k \Delta {\theta_k^*}^Tu
+=
+\left[
+\begin{array}{cc}
+\Delta \gamma_k 
+\\
+\Delta \lambda_k 
+\end{array}
+\right]
+\Delta {\theta_k^*}^Tu
+\indent
+\text{which implies}
+\indent
+\sum_{r=1}^{n} [(\Delta \theta_k\Delta {\theta_k^*}^Tu)_{\gamma}]_r 
+=
+\Delta {\theta_k^*}^Tu\sum_{r=1}^{n} [\Delta \gamma_k]_r
+= 0
+\]
+As for the third matrix term:
+\[
+\Delta \theta_k^* \Delta \theta_k^Tu
+=
+(-\Delta\tilde{g}_k + S_k\Delta g_k)\Delta \theta_k^Tu
+\]
+Eqn (\ref{eq:gsquigglyzero}) implies:
+\[
+\sum_{r=1}^{n}[(\Delta\tilde{g}_k)_{\gamma}]_r = 0
+\]
+And assumption (\ref{eqn:Sgzero}) allows that:
+\[
+\sum_{r=1}^{n}[(S_k\Delta g_k)_{\gamma}]_r = 0
+\]
+Therefore,
+\begin{equation} \label{eq:Suzero}
+\sum_{r=1}^{n}[(\Delta S_ku)_{\gamma}]_r 
+= \sum_{r=1}^{n}[(a\Delta \theta_k\Delta \theta_k^Tu + b\Delta \theta_k^* \Delta \theta_k^Tu + c\Delta \theta_k \Delta {\theta_k^*}^Tu)_{\gamma}]_r
+= 0
+\end{equation}
+where $a,b,c$ are constants (which need not be derived).  It follows that
+\[
+\sum_{r=1}^{n}[(S_{k+1}u)_{\gamma}]_r = 0
+\]
+Ergo, Eqn (\ref{eq:gammastepzero}) must also be true for $k+1$ and, by induction, must hold for all $k$, as long as $S_0$ is chosen such that:
+\[
+\sum_{r=1}^{n}[(S_{0}u)_{\gamma}]_r = 0
+\]
+Hence, we should choose $S_0 = \boldsymbol{0}$.  This is an interesting result of the BFGS update to QN2 on mixture problems that assume the construction $p(z_i=r|\theta)=\gamma_r$ that allows us to maintain feasibility in the equality constraint.  The next section discusses how to construct QN2 as a Newton Lagrange method.
+
+\subsection{Newton Lagrange Method of QN2}
+
+Another nice property of $p(z_i=r|\theta)=\gamma_r$ for QN2 is that the Lagrange multiplier $\lambda^*$ is easy to compute.  The Lagrangian function of Eqn (\ref{eq:QH}) is:
+\[
+\mathcal{L}(\theta,\lambda) = l(\theta) - \lambda(\sum_{r=1}^{n}\gamma_r - 1)
+\]
+Using Eqn (\ref{eq:dl_is_dq}), the gradient of the Lagrangian is:
+\[
+\nabla_{\theta}\mathcal{L}(\theta,\lambda)|_{\theta=\phi}
+= \nabla_{\theta}Q(\theta|\phi) - \lambda J^T
+\indent
+\text{where}
+\indent
+J^T =
+\left[
+\begin{array}{c}
+\boldsymbol{1}_n
+\\
+\boldsymbol{0}_n
+\end{array}
+\right]
+\begin{array}{c}
+\leftarrow\gamma
+\\
+\leftarrow\lambda
+\end{array}
+\]
+Using our concrete mixture of poissons example:
+\[
+Q(\theta|\phi) = E[log(p(\vec{x},\vec{z}|\theta)|\vec{x},\phi]
+=
+\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)log(p(x_i,z_i=r|\theta))
+\]
+\[
+=\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
+log(p(z_i|\theta)p(x_i|z_i=r,\theta))
+\]
+\[
+=\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
+\left(
+log(\gamma) + log(p(x_i|z_i=r,\theta))\right)
+\]
+The gradient of the Lagrangian is:
+\[
+\frac{\partial}{\partial \gamma_r}\mathcal{L}(\theta,\lambda)|_{\theta=\phi}
+=
+\frac{1}{\gamma_r}\left[\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
+\right]-\lambda
+\]
+Solving for the zero of the gradient yields:
+\[
+\gamma_r
+=
+\frac{1}{\lambda}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
+\]
+Summing over all $\gamma_r$ and setting to one yields:
+\[
+1 = \sum_{r=1}^{n}\gamma_r = 
+\sum_{r=1}^{n}\frac{1}{\lambda}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
+=
+\frac{1}{\lambda}\sum_{i=1}^{m}\sum_{r=1}^{n}p(z_i=r|x_i,\phi)
+= \frac{m}{\lambda}
+\]
+Thus,
+\[
+\lambda^* = \frac{1}{m}
+\]
+This is a well-known result of mixtures.  With it, we can show how to formulate QN2 within the Newton Lagrange method construct. The standard Newton Lagrange formulation is:
+\[
+\left[
+\begin{array}{cc}
+\nabla^2_{\theta_k}l(\theta_k) & -J^T
+\\
+J^T & 0
+\end{array}
+\right]
+\left[
+\begin{array}{cc}
+d_k
+\\
+\delta
+\end{array}
+\right]
+=
+-
+\left[
+\begin{array}{c}
+g_k - \lambda J^T
+\\
+c(\theta_k)
+\end{array}
+\right]
+\indent
+\text{where}
+\indent
+c(\theta_k) = \sum_{r=1}^{n}[\gamma_k]_r - 1
+\]
+If we set $\lambda=\lambda^*=1/m$ for all iterations, as well as initialize $S_0 = \boldsymbol{0}_{2n \times 2n}$ and $\sum_{r=1}^{n}[\gamma_0]_r=1$, then $\delta=0$  for all iterations, because $\lambda=\lambda^*$.  Thus, the Newton Lagrange formulation becomes:  
+\[
+\left[
+\begin{array}{cc}
+\nabla^2_{\theta_k}l(\theta_k) & -J^T
+\\
+J^T & 0
+\end{array}
+\right]
+\left[
+\begin{array}{cc}
+d_k
+\\
+0
+\end{array}
+\right]
+=
+-
+\left[
+\begin{array}{c}
+g_k - \lambda^* J^T
+\\
+0
+\end{array}
+\right]
+\]
+Which reduces to:
+\[
+\nabla^2_{\theta_k}l(\theta_k)d_k
+=
+-(g_k - \lambda^*J^T)
+\]
+Which is approximated by:
+\[
+d_k = \tilde{g}_k-S_k\bar{g}
+\indent
+\text{where}
+\indent
+\bar{g}_k = g_k-\lambda^*J^T
+\]
+Note that this has not altered our approximation of $S_k$, since at each BFGS update we are concerned with $\Delta g_k$.  Furthermore, it was shown in Eqn (\ref{eq:Suzero}) that the equality constraints will still hold in all iterations with this new formulation.
 
 \subsection{Line Search}
 
-\cite{jamshidianj97} use the line search described by \cite{jamshidianj93}, with initial step length equal to 2.  I will not refer to that here and instead use the Armijo and Wolfe sufficient increase conditions (i.e. the Strong Wolfe conditions) to perform the line search.  These steps are outlined below.  The step size $\alpha_k$ is initialized using the output from the constraint enforcement step (\ref{constraint_enforecement}) to ensure that all line search function evaluations occur within the feasible region.
+\cite{jamshidianj97} use the line search described by \cite{jamshidianj93}, with initial step length equal to 2.  I will not refer to that here and instead use the Armijo and Wolfe sufficient increase conditions (i.e. the Strong Wolfe conditions) to perform the line search.  These steps are outlined below.  The step size $\alpha_k$ is initialized using the output from the constraint enforcement step (\ref{alg:constraint_enforecement}) to ensure that all line search function evaluations occur within the feasible region.
 
 
 \begin{algorithm} 
@@ -335,9 +590,9 @@ The equality parameter constraint is handled by
 \State $T = 10$
 \State $t = 0$
 \While{
-$l(\theta_k + \alpha_k d_k) - l(\theta_k) \geq \eta_s \alpha_k g_k^Td_k$
+$l(\theta_k + \alpha_k d_k) - l(\theta_k) \geq \eta_s \alpha_k \bar{g}_k^Td_k$
 and
-$g_k^Td_k \leq \eta_w g(\theta_k+\alpha_k d_k)^Td_k$
+$\bar{g}_k^Td_k \leq \eta_w \bar{g}(\theta_k+\alpha_k d_k)^Td_k$
 and
 $t < T$
 }
@@ -361,7 +616,7 @@ This line search runs until it either finds an $\alpha_k$ that satisfies the Str
 \begin{equation} \label{eq:rg}
 rg = \max_i
 \left[
-|g(\theta_k)|_i
+|\bar{g}(\theta_k)|_i
 \frac
 {\max\{|\theta_k + \Delta \theta_k|_i,1\}}
 {max\{|l(\theta_k + \Delta \theta_k|),1\}}
@@ -369,13 +624,20 @@ rg = \max_i
 < f_{tol}
 \end{equation}
 
-An alternative merit function is the 2-norm of $g_k$.
+An alternative merit function is the 2-norm of $\bar{g}_k$.
 
 \subsection{Initialization}
 
 Given an initial set of parameters $\theta_0$, \cite{jamshidianj93} recommend running a few iterations of EM before beginning QN2.  We do the same here.
 
-Since we already begin with a nonzero approximation of 
+As discussed above, set:
+\[
+S_0 = \boldsymbol{0}_{2n \times 2n}
+\indent \indent
+\theta_0 \text{ feasible}
+\indent \indent
+\lambda^* = \frac{1}{m}
+\]
 
 \subsection{Algorithm Summary}
 
@@ -385,23 +647,24 @@ For completion, I summarize the major steps of my implementation of the QN2 algo
 \caption{QN2 Implementation}
 \label{alg:qn2}
 \begin{algorithmic}[1]
-\State Given $\theta_0$
+\State Given $\theta_0$ feasible
+\State Define $\lambda^* = \frac{1}{m}$
 \State Define maxit
 \State Define $f_{tol}$
 \State $\theta$ = EM($\theta_0$; $6$ iterations)
 \indent \indent  \indent\indent \indent \indent \indent \indent  \textit{Algorithm (\ref{alg:em})}
-\State $g = g(\theta)$
-\indent \indent \indent \indent \indent \indent\indent \indent \indent \indent \indent \space \space \space \textit{Eqn (\ref{eq:define_g})}
+\State $\bar{g} = \bar{g}(\theta) = g(\theta) - \lambda^*J^T$
+\indent  \indent \indent\indent \indent \indent \indent \indent \space  \textit{Eqn (\ref{eq:define_g})}
 \State $\tilde{g} = \tilde{g}(\theta)$
 \indent \indent \indent \indent \indent \indent\indent \indent \indent \indent \indent \space \space \space \textit{Eqn (\ref{eq:define_gsquiggly})}
-\State $S = \boldsymbol{0}$
+\State $S = \boldsymbol{0}_{2n \times 2n}$
 \State $rg = rg(\theta)$
 \indent \indent \indent \indent \indent \indent\indent \indent \indent \indent \indent  \textit{Eqn (\ref{eq:rg})}
 \State $k = 0$
 \While{
 $rg \geq f_{tol}$ and $k <$ maxit}
 \State $k = k + 1$
-\State $d = \tilde{g} - Sg$
+\State $d = \tilde{g} - S\bar{g}$
 \State $\alpha = $ ConstraintEnforcement($\theta,d$) 
 \indent \indent \indent \indent \indent \space \space \textit{Algorithm (\ref{alg:constraint_enforecement})}
 \State $\alpha$, foundalpha = StrongWolfeLineSearch($\theta,d,\alpha$) 
@@ -410,12 +673,12 @@ $rg \geq f_{tol}$ and $k <$ maxit}
 \State $\Delta\theta = \alpha d$
 \State $\Delta g = g(\theta+\Delta\theta) - g$
 \State $\Delta \tilde{g} = \tilde{g}(\theta + \Delta\theta) - \tilde{g}$
-\State $\Delta \theta^* = \tilde{g} - Sg$
+\State $\Delta \theta^* = \tilde{g} - S\bar{g}$
 \State $\Delta S = $ BFGS Update 
 \indent \indent \indent \indent \indent \indent \indent \space \space \textit{Eqn (\ref{eq:BFGS})}
 \State $\theta = \theta + \Delta\theta$
 \State $rg = rg(\theta,g)$
-\State $g = g+\Delta g$
+\State $\bar{g} = \bar{g}+\Delta g$
 \State $\tilde{g} = \tilde{g}+\Delta \tilde{g}$
 \State $S = S +\Delta S$
 \Else
