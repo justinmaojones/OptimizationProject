@@ -13,49 +13,55 @@ I was expecting a `,' or a `}'---line 56 of file references.bib.bib
  :  year = "2006",
 (Error may have been on previous line)
 I'm skipping whatever remains of this entry
+I was expecting a `,' or a `}'---line 65 of file references.bib.bib
+ :  
+ :  year = "2006",
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
 Warning--there's a number but no volume in khalfan93
 Warning--empty publisher in nocedalwright_BFGS
 Warning--empty year in nocedalwright_BFGS
-Warning--empty year in nocedalwright_BFGS
-You've used 7 entries,
+Warning--empty publisher in nocedalwright_SQP
+Warning--empty year in nocedalwright_SQP
+You've used 8 entries,
             2773 wiz_defined-function locations,
-            635 strings with 5742 characters,
-and the built_in function-call counts, 2863 in all, are:
-= -- 247
-> -- 143
-< -- 5
-+ -- 49
-- -- 42
-* -- 223
-:= -- 449
-add.period$ -- 21
-call.type$ -- 7
-change.case$ -- 35
+            637 strings with 5776 characters,
+and the built_in function-call counts, 3235 in all, are:
+= -- 277
+> -- 164
+< -- 6
++ -- 57
+- -- 48
+* -- 253
+:= -- 507
+add.period$ -- 24
+call.type$ -- 8
+change.case$ -- 40
 chr.to.int$ -- 7
-cite$ -- 18
-duplicate$ -- 141
-empty$ -- 252
-format.name$ -- 55
-if$ -- 597
-int.to.chr$ -- 1
+cite$ -- 21
+duplicate$ -- 161
+empty$ -- 284
+format.name$ -- 64
+if$ -- 674
+int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 8
-newline$ -- 43
-num.names$ -- 28
-pop$ -- 70
+missing$ -- 10
+newline$ -- 48
+num.names$ -- 32
+pop$ -- 85
 preamble$ -- 1
-purify$ -- 28
+purify$ -- 32
 quote$ -- 0
-skip$ -- 99
+skip$ -- 108
 stack$ -- 0
-substring$ -- 89
-swap$ -- 7
+substring$ -- 91
+swap$ -- 10
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 72
-warning$ -- 4
-while$ -- 26
+type$ -- 78
+warning$ -- 5
+while$ -- 29
 width$ -- 0
-write$ -- 95
-(There were 2 error messages)
+write$ -- 108
+(There were 3 error messages)

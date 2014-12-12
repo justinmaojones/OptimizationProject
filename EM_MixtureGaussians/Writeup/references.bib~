@@ -52,9 +52,18 @@
 @book{nocedalwright_BFGS,
 	author = "Jorge Nocedal and Stephen J. Wright",
 	title = "Numerical Optimization",
-	edition = "2"
+	edition = "2nd"
 	year = "2006",
 	publisher = "Springer",
 	address = "New York, NY"
 	pages = "136-140"
+}
+@book{nocedalwright_BFGS,
+	author = "Jorge Nocedal and Stephen J. Wright",
+	title = "Numerical Optimization",
+	edition = "2nd"
+	year = "2006",
+	publisher = "Springer",
+	address = "New York, NY"
+	pages = "530-532"
 }

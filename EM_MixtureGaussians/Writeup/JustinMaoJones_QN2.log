@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.10.30)  12 DEC 2014 03:39
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.10.30)  12 DEC 2014 15:57
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -686,13 +686,13 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2]
-Overfull \hbox (3.60817pt too wide) detected at line 110
+Overfull \hbox (7.02339pt too wide) detected at line 110
 \OT1/cmr/m/n/12 = [] [] [][] \OML/cmm/m/it/12 p\OT1/cmr/m/n/12 (\OML/cmm/m/it/1
 2 z[]\OMS/cmsy/m/n/12 j\OML/cmm/m/it/12 x[]; ^^^\OT1/cmr/m/n/12 )\OML/cmm/m/it/
 12 dz[] \OT1/cmr/m/n/12 = [] [] \OML/cmm/m/it/12 p\OT1/cmr/m/n/12 (\OML/cmm/m/i
-t/12 z[]\OMS/cmsy/m/n/12 j\OML/cmm/m/it/12 x[]; ^^^\OT1/cmr/m/n/12 )\OML/cmm/m/
-it/12 log\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 p\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 x
-[]\OMS/cmsy/m/n/12 j\OML/cmm/m/it/12 ^^R\OT1/cmr/m/n/12 )\OML/cmm/m/it/12 dz[]
+t/12 z[]\OMS/cmsy/m/n/12 j\OML/cmm/m/it/12 x[]; ^^^\OT1/cmr/m/n/12 ) [](\OML/cm
+m/m/it/12 p\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 x[]\OMS/cmsy/m/n/12 j\OML/cmm/m/it
+/12 ^^R\OT1/cmr/m/n/12 )\OML/cmm/m/it/12 dz[]
  []
 
 [3]
@@ -716,41 +716,43 @@ A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ^^A[][]\OML/cmm/m/it/12 u\OT1/cmr/m/n/12
 ]\OT1/cmr/m/n/12 ][] = 0
  []
 
-[7] [8] [9] [10] [11] (./JustinMaoJones_QN2.bbl)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 697.
- [12]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 697.
- (./JustinMaoJones_QN2.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 697.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 697.
+[7] [8] [9] [10] [11] [12] [13] (./JustinMaoJones_QN2.bbl)
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 795.
+ [14]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 795.
+
+(./JustinMaoJones_QN2.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 795.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 795.
 Package rerunfilecheck Info: File `JustinMaoJones_QN2.out' has not changed.
-(rerunfilecheck)             Checksum: 1811C8D40DEA120EFC038AEE754DF47D;529.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 697.
+(rerunfilecheck)             Checksum: 4240D946D332D662FB1F3D1FEC569A50;961.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 795.
  ) 
 Here is how much of TeX's memory you used:
- 9363 strings out of 495028
- 136987 string characters out of 6181496
- 234100 words of memory out of 5000000
- 12383 multiletter control sequences out of 15000+600000
+ 9382 strings out of 495028
+ 137275 string characters out of 6181496
+ 234178 words of memory out of 5000000
+ 12393 multiletter control sequences out of 15000+600000
  16202 words of font info for 63 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  36i,11n,38p,861b,430s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/shar
-e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texl
-ive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cms
-y8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb
->
-Output written on JustinMaoJones_QN2.pdf (12 pages, 181695 bytes).
+e/texlive/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex8.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.
+pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb>
+Output written on JustinMaoJones_QN2.pdf (14 pages, 205554 bytes).
 PDF statistics:
- 248 PDF objects out of 1000 (max. 8388607)
- 219 compressed objects within 3 object streams
- 49 named destinations out of 1000 (max. 500000)
- 73 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 295 PDF objects out of 1000 (max. 8388607)
+ 262 compressed objects within 3 object streams
+ 58 named destinations out of 1000 (max. 500000)
+ 121 words of extra memory for PDF output out of 10000 (max. 10000000)
 

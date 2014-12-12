@@ -1,4 +1,6 @@
 import PoissonQN2_MultiMixture as qn2
+from utils import AlgRuns
+from utils import Problem
 
 import numpy.random as random
 import numpy as np
@@ -40,37 +42,14 @@ def printlast20(Log):
         print '\n',
     
 
-class AlgRuns():
-    def __init__(self, params):
-        self.gammas = params[0][0]
-        self.thetas = params[0][1]
-        self.k = params[0][2]
-        self.rg = params[0][3]
-        #self.Log = params[0][4]
-        self.converged = params[0][5]
-        self.ll = params[0][6]
-        self.time = params[1]
-        
-class Problem():
-    def __init__(self, params,gammas0,thetas0):
-        self.c = params[0]
-        self.lambdas = params[1]
-        self.pvals = params[2]
-        self.gammas0 = gammas0
-        self.thetas0 = thetas0
-        
-    def init_EM(self,params):
-        self.EM = AlgRuns(params)
-    
-    def init_QN2(self,params):
-        self.QN2 = AlgRuns(params)
+
         
         
 
 RunData1 = []
 RunData2 = []
 RunData3 = []
-num_mixtures = 5
+num_mixtures = 2
 num_samples = 30000
 exp_lambda = 10.0
 T = 100

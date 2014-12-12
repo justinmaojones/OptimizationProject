@@ -24,7 +24,7 @@
 \setlength{\oddsidemargin}{.125in}
 \setlength{\textwidth}{6.25in}
 \begin{document}
-\title{QN2: A Hybrid Quasi Newton Acceleration of the EM Algorithm}
+\title{SQP Methods for QN2 Quasi Newton Acceleration of the EM Algorithm}
 \author{Final Project\\CSCI-GA.2945 Numerical Optimization\\Justin Mao-Jones\\New York University}
 \renewcommand{\today}{December 14, 2014}
 \maketitle
@@ -70,22 +70,22 @@ p(x_i=j,z_i=r|\theta)
 \end{equation}
 We wish to compute the maximum likelihood estimates, and so we begin with the log likelihood function, which is defined as:
 \[
-l(\theta) = log(\prod_{i=1}^{m}p(x_i|\theta)) = \sum_{i=1}^{m} log(p(x_i|\theta))
+l(\theta) = \log(\prod_{i=1}^{m}p(x_i|\theta)) = \sum_{i=1}^{m} \log(p(x_i|\theta))
 \]
 This is the point at which a method such as the EM algorithm becomes useful.  Since $z_i$ are unobserved, solving for the roots of the derivative of $l(\theta)$ can be an intractable problem:
 \[
-\sum_{i=1}^{m} log(p(x_i|\theta)) = \sum_{i=1}^{m} log\left(\sum_{r=1}^{n}p(x_i,z_i|\theta))\right)
+\sum_{i=1}^{m} \log(p(x_i|\theta)) = \sum_{i=1}^{m} \log\left(\sum_{r=1}^{n}p(x_i,z_i|\theta))\right)
 \]
 Fortunately, $l(\theta)$ can be converted into a more manageable form.  Consider the probability distribution $p(\vec{z}|\vec{x},\phi)$.  Note that this function is parameterized by $\phi$ and not $\theta$.  Per the EM literature:
 \[
-l(\theta) = log(p(\vec{x}|\theta)) 
-= \int_{\vec{z}}p(\vec{z}|\vec{x},\phi)log(p(\vec{x}|\theta))d\vec{z}
+l(\theta) = \log(p(\vec{x}|\theta)) 
+= \int_{\vec{z}}p(\vec{z}|\vec{x},\phi)\log(p(\vec{x}|\theta))d\vec{z}
 \]
 \[
 =
-E[log(p(\vec{x},\vec{z}|\theta))|\vec{x},\phi]
+E[\log(p(\vec{x},\vec{z}|\theta))|\vec{x},\phi]
 -
-E[log(p(\vec{z}|\vec{x},\theta))|\vec{x},\phi]
+E[\log(p(\vec{z}|\vec{x},\theta))|\vec{x},\phi]
 \]
 \begin{equation} \label{eq:QH}
 =Q(\theta|\phi)
@@ -100,28 +100,28 @@ where $Q(\theta|\phi)$ and $H(\theta|\phi)$ are defined as the left and right co
 The previous identity is true due to the identity $\int_{z_j}p(z_j|x_j,\phi)dz_j=1$.  Now, multiply $l(\theta)$ by $\int_{\vec{z}}p(\vec{z}|\vec{x},\vec{\phi})d\vec{z}=1$:
 \[
 l(\theta)
-= \left( \sum_{i=1}^{m} log(p(x_i|\theta)\right)
+= \left( \sum_{i=1}^{m} \log(p(x_i|\theta)\right)
 \prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
 \]
 \[
-= \left( \sum_{i=1}^{m} \int p(z_i|x_i,\phi)log(p(x_i|\theta)dz_i\right)
+= \left( \sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i\right)
 \prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
-=\sum_{i=1}^{m} \int p(z_i|x_i,\phi)log(p(x_i|\theta)dz_i
+=\sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
 \]
 The previous result was derived by putting the $i^{th}$ integral inside of the summation and the log inside of the integral.  Now we use Bayes' theorem to derive a useful result:
 \[
-\sum_{i=1}^{m} \int p(z_i|x_i,\phi)log(p(x_i|\theta))dz_i
-= \sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(x_i,z_i|\theta)\frac{p(x_i|\theta)}{p(x_i,z_i|\theta)}\right) dz_i
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta))dz_i
+= \sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(x_i,z_i|\theta)\frac{p(x_i|\theta)}{p(x_i,z_i|\theta)}\right) dz_i
 \]
 \[
 =
-\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(\frac{p(x_i,z_i|\theta)}{p(z_i|x_i,\theta)}\right) dz_i
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(\frac{p(x_i,z_i|\theta)}{p(z_i|x_i,\theta)}\right) dz_i
 \]
 \[
 =
-\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(x_i,z_i|\theta)\right) dz_i
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(x_i,z_i|\theta)\right) dz_i
 -
-\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(z_i|x_i,\theta)\right) dz_i
+\sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(z_i|x_i,\theta)\right) dz_i
 \] 
 \[
 =Q(\theta|\phi)
@@ -132,14 +132,14 @@ This result is useful, because $\nabla_{\theta}l(\theta)$ evaluated at $\theta =
 \[
 \nabla_{\theta}H(\theta|\phi)|_{\theta = \phi}
 =
-\nabla_{\theta}\sum_{i=1}^{m} \int p(z_i|x_i,\phi) log \left(p(z_i|x_i,\theta)\right) dz_i
+\nabla_{\theta}\sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(z_i|x_i,\theta)\right) dz_i
 \]
 \[
 =
 \sum_{i=1}^{m} 
 \int p(z_i|x_i,\phi) 
 \nabla_{\theta}|_{\theta = \phi}
-log \left(p(z_i|x_i,\theta)\right) dz_i
+\log \left(p(z_i|x_i,\theta)\right) dz_i
 =
 \sum_{i=1}^{m} 
 \int \dfrac{p(z_i|x_i,\phi)}{p(z_i|x_i,\phi)} 
@@ -189,7 +189,7 @@ and $k < $ \textbf{maxit}}
 
 \section{QN2 Algorithm}
 
-The QN2 Algorithm by \cite{jamshidianj97} is described as a Quasi Newton method using Broyden-Fletcher-Goldfarb-Shanno (BFGS) symmetric rank 2 updating.  It also uses Newton Lagrange method for mixture equality constraints, such as (\ref{eq_constraint}), though this is not explicitly mentioned in \cite{jamshidianj97}.  I will show how this is constructed.  Enforcement of the inequality constraints is explained in the next subsection. 
+The QN2 Algorithm by \cite{jamshidianj97} is described as a Quasi Newton method using Broyden-Fletcher-Goldfarb-Shanno (BFGS) symmetric rank 2 updating.  I will show how it can be applied with Sequential Quadratic Programming to estimate n-dimensional mixture models with equality constraints.   
 
 To begin, we define the following:
 \begin{equation} \label{eq:define_g}
@@ -346,7 +346,7 @@ Second, consider $\sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r$:
 =
 \sum_{r=1}^{n} [(M(\theta_k))_{\gamma}]_r - \sum_{r=1}^{n} [\gamma_k]_r = 1 - 1 = 0
 \end{equation}
-which holds true for all $k$.  By definition, $M(\theta_k)$ is another estimate of $\theta$ that satisfies all parameter constraints.  An explicit example of $M(\theta_k)$ is provided in section ..............  
+which holds true for all $k$.  By definition, $M(\theta_k)$ is another estimate of $\theta$ that satisfies all parameter constraints.  An explicit example of $M(\theta_k)$ is provided in Section \ref{section:poisson}
 
 By assumption (\ref{eqn:Sgzero}) and Eqn (\ref{eq:gsquigglyzero}), Eqn (\ref{eq:dstepzero}) holds true, and thus Eqn (\ref{eq:gammastepzero}) holds for $k$.  However, this does not yet prove that Eqn (\ref{eq:gammastepzero}) will hold for iteration $k+1$ or any other subsequent iterations.  
 
@@ -435,9 +435,9 @@ Ergo, Eqn (\ref{eq:gammastepzero}) must also be true for $k+1$ and, by induction
 \]
 Hence, we should choose $S_0 = \boldsymbol{0}$.  This is an interesting result of the BFGS update to QN2 on mixture problems that assume the construction $p(z_i=r|\theta)=\gamma_r$ that allows us to maintain feasibility in the equality constraint.  The next section discusses how to construct QN2 as a Newton Lagrange method.
 
-\subsection{Newton Lagrange Method of QN2}
+\subsection{Sequential Quadratic Programming Method of QN2}
 
-Another nice property of $p(z_i=r|\theta)=\gamma_r$ for QN2 is that the Lagrange multiplier $\lambda^*$ is easy to compute.  The Lagrangian function of Eqn (\ref{eq:QH}) is:
+Another nice property of $p(z_i=r|\theta)=\gamma_r$ for QN2 is that the Lagrange multiplier $\lambda^*$ at the optimal solution is easy to compute.  The Lagrangian function of Eqn (\ref{eq:QH}) is:
 \[
 \mathcal{L}(\theta,\lambda) = l(\theta) - \lambda(\sum_{r=1}^{n}\gamma_r - 1)
 \]
@@ -464,18 +464,18 @@ J^T =
 \]
 Using our concrete mixture of poissons example:
 \[
-Q(\theta|\phi) = E[log(p(\vec{x},\vec{z}|\theta)|\vec{x},\phi]
+Q(\theta|\phi) = E[\log(p(\vec{x},\vec{z}|\theta)|\vec{x},\phi]
 =
-\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)log(p(x_i,z_i=r|\theta))
+\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)\log(p(x_i,z_i=r|\theta))
 \]
 \[
 =\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
-log(p(z_i|\theta)p(x_i|z_i=r,\theta))
+\log(p(z_i|\theta)p(x_i|z_i=r,\theta))
 \]
 \[
 =\sum_{r=1}^{n}\sum_{i=1}^{m}p(z_i=r|x_i,\phi)
 \left(
-log(\gamma) + log(p(x_i|z_i=r,\theta))\right)
+\log(\gamma) + \log(p(x_i|z_i=r,\theta))\right)
 \]
 The gradient of the Lagrangian is:
 \[
@@ -502,11 +502,11 @@ Thus,
 \[
 \lambda^* = \frac{1}{m}
 \]
-This is a well-known result of mixtures.  With it, we can show how to formulate QN2 within the Newton Lagrange method construct. The standard Newton Lagrange formulation is:
+This is a well-known result of mixtures.  With it, we can show how to formulate QN2 within the SQP construct. The SQP can be formulated as follows.  See \cite{nocedalwright_SQP} for more details.
 \[
 \left[
 \begin{array}{cc}
-\nabla^2_{\theta_k}l(\theta_k) & -J^T
+\nabla^2_{\theta_k}\mathcal{L}(\theta_k,\lambda_k) & -J^T
 \\
 J^T & 0
 \end{array}
@@ -515,14 +515,14 @@ J^T & 0
 \begin{array}{cc}
 d_k
 \\
-\delta
+\lambda_{k+1}
 \end{array}
 \right]
 =
 -
 \left[
 \begin{array}{c}
-g_k - \lambda J^T
+g_k
 \\
 c(\theta_k)
 \end{array}
@@ -532,7 +532,7 @@ c(\theta_k)
 \indent
 c(\theta_k) = \sum_{r=1}^{n}[\gamma_k]_r - 1
 \]
-If we set $\lambda=\lambda^*=1/m$ for all iterations, as well as initialize $S_0 = \boldsymbol{0}_{2n \times 2n}$ and $\sum_{r=1}^{n}[\gamma_0]_r=1$, then $\delta=0$  for all iterations, because $\lambda=\lambda^*$.  Thus, the Newton Lagrange formulation becomes:  
+If we initialize the multiplier $\lambda_0=\lambda^*=1/m$, as well as initialize $S_0 = \boldsymbol{0}_{2n \times 2n}$ and $\sum_{r=1}^{n}[\gamma_0]_r=1$, then $\lambda_k=\lambda^*=1/m$  for all iterations.  Thus, the SQP formulation becomes:  
 \[
 \left[
 \begin{array}{cc}
@@ -545,14 +545,14 @@ J^T & 0
 \begin{array}{cc}
 d_k
 \\
-0
+\lambda^*
 \end{array}
 \right]
 =
 -
 \left[
 \begin{array}{c}
-g_k - \lambda^* J^T
+g_k
 \\
 0
 \end{array}
@@ -689,7 +689,105 @@ $rg \geq f_{tol}$ and $k <$ maxit}
 \end{algorithm}
 
 
-Some more stuff
+\section{Mixture of Poissons} \label{section:poisson}
+
+\cite{jamshidianj97} provide the gradient and EM operator solutions for a two mixture Poisson, while using $\gamma,1-\gamma$ to model $\gamma_1,\gamma_2$.  This approach is fine in 2 dimensions, but becomes significantly more complicated in higher dimensions.  Here I list the computations for the generalized n-mixture Poisson problem.
+
+Given a mixture of $n$ poissons parameterized by $\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n$, the gradient of the Lagrange function is as follows:
+\[
+\frac{\partial \mathcal{L}(\theta)}{\partial \gamma_r}
+=
+\frac{\partial Q(\theta|\phi)}{\partial \gamma_r}|_{\phi=\theta} - \lambda^*
+=
+\frac{1}{\gamma_r} \sum_{j=0}^{J}w_{rj}c_j - \lambda^*
+\]
+\[
+\frac{\partial \mathcal{L}(\theta)}{\partial \lambda_r}
+=
+\frac{\partial Q(\theta|\phi)}{\partial \lambda_r}
+=
+\frac{1}{\lambda_r} \sum_{j=0}^{J}jw_{rj}c_j - \sum_{j=0}^{J}w_{rj}c_j
+\]
+\[
+w_{rj}=p(z=r|x=j,\phi)=\frac{[\gamma_{\phi}]_r e^{-[\lambda_{\phi}]_r}[\lambda_{\phi}]_r^j}{\sum_{s=1}^{n}[\gamma_{\phi}]_s e^{-[\lambda_{\phi}]_s}[\lambda_{\phi}]_s^j}
+\]
+\[
+c_j = \sum_{i=1}^{m}1_{x_i=j}
+\indent
+J = \max(x_i)
+\]
+$[\gamma_{\phi}]$ and $[\lambda_{\phi}]$ are the $\gamma$ and $\lambda$ elements of $\phi$.
+
+The EM operator $M(\theta_k)$ for the mixture of poissons is determined by solving for the zero of the derivative of the Lagrange function with respect to $\theta$ conditional on $\phi=\theta_k$.  At the maximum likelihood estimate, $M(\theta_k)=\theta_k$.
+\[
+[\gamma_{k+1}]_r = \frac{\sum_{j=0}^{J}w_{rj}c_j}{\sum_{j=0}^{J}c_j}
+\indent
+[\lambda_{k+1}]_r = \frac{\sum_{j=0}^{J}jw_{rj}c_j}{\sum_{j=0}^{J}w_{rj}c_j}
+\]
+
+The log likelihood function is:
+\[
+l(\theta) = \sum_{j=1}^{J}c_j\log\left({\sum_{r=1}^{n}\gamma_r\frac{e^{-\lambda_r}\lambda_r^j}{j!}}\right)
+\]
+
+\subsection{Computing Poisson Densities}
+
+The natural structure of the Poisson density function runs into issues when computed numerically due to the terms $\lambda_r^j$ and $j!$.  Therefore, I convert these densities to a different form that is more numerically stable:
+\[
+\frac{e^{-\lambda_r}\lambda_r^j}{j!}
+\indent
+\rightarrow
+\indent
+e^{-\lambda_r+j\log(\lambda_r)-\sum_{i=0}^{j}\log(j)}
+\]
+
+\section{Comparison of EM and QN2 SQP on Mixtures of Poissons}
+
+My implementation of EM and QN2 SQP is written in the Python programming language version 2.7.  A copy of the code is provided as a supplement to this paper.
+
+The scope of my comparison EM and QN2 SQP encompasses "practical problems", rather than edge-case problems.  I build a random problem generator, which I use to generate a large sample of problems on which I run EM and QN2 SQP.  
+
+From a practical perspective, two high level criteria for comparing algorithms are speed and reliability.  From the user's perspective, speed is execution time, and reliability is whether or not the algorithm converges to the solution.  Therefore, I compare convergence rates, execution times, convergence failures, and solutions.
+
+I run comparisons on a mixtures of 2 Poissons (sample size 3000), 5 Poissons (sample size 3000), and 10 Poissons (sample size 30000).
+
+\subsection{Random Problem Generator}
+
+I generate hidden samples $z_1,...,z_m$ from a multinomial distribution parameterized by random p-values.  Next, I generate a $\lambda$ values for each of the $n$ Poisson distributions using an exponential distribution with mean $1/10$.  Then I generate sample observations $x_1,...,x_m$ where observation $x_i$ generated from Poisson distribution $z_i$, which is parameterized by $\lambda_{z_i}$.  Finally, only the sample observations $x_1,...,x_m$ are passed to each algorithm.
+
+\subsection{Initialization}
+
+For each randomly generated problem, I test three initial starting conditions:
+
+Initialization A:
+\[
+\gamma_0 = [\frac{1}{n(n+1)/2},...,\frac{n}{n(n+1)/2}]^T
+\]
+\[
+\lambda_0 = [1,...,n]^T
+\]
+
+Initialization B:
+\[
+\gamma_0 = \{\text{parameters used for random problem generator}\}
+\]
+\[
+\lambda_0 = \{\text{parameters used for random problem generator}\}
+\]
+
+Initialization C:
+\[
+\gamma_0 = [\frac{1}{n},...,\frac{1}{n}]^T
+\]
+\[
+\lambda_0 = [1,...,n]^T
+\]
+
+As an aside, any point in which $\lambda_1 = \dots = \lambda_n$ is a stationary point, and very likely not the maximum likelihood estimator.
+
+\subsection{Results}
+
+
 
 \pagebreak
 \bibliographystyle{plainnat}

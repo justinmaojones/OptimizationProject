@@ -1,4 +1,32 @@
 import pickle
+import numpy as np
+
+
+class AlgRuns():
+    def __init__(self, params):
+        self.gammas = params[0][0]
+        self.thetas = params[0][1]
+        self.k = params[0][2]
+        self.rg = params[0][3]
+        self.Log = params[0][4][-min(len(params[0][4]),55):]
+        self.converged = params[0][5]
+        self.ll = params[0][6]
+        self.time = params[1]
+        
+class Problem():
+    def __init__(self, params,gammas0,thetas0):
+        self.c = params[0]
+        self.lambdas = params[1]
+        self.pvals = params[2]
+        self.gammas0 = gammas0
+        self.thetas0 = thetas0
+        self.num_mixtures = len(gammas0)
+        
+    def init_EM(self,params):
+        self.EM = AlgRuns(params)
+    
+    def init_QN2(self,params):
+        self.QN2 = AlgRuns(params)
 
 def pickleIt(pyName, outputName):
     output = open(outputName+'.pk1', 'wb')
