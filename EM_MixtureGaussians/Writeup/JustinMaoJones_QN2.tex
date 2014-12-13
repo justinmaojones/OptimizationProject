@@ -835,6 +835,25 @@ The reported convergence rates are the average of the convergence rate in the fi
 
 Figure 1d shows unsurprising results.  EM shows linear convergence and QN2 shows superlinear convergence.
 
+Figure 1e is another scatter plot showing the number of iterations required to terminate.  Each dot represents the EM iterations vs the QN2 iterations for a given problem and given initialization.  This plot shows the same behavior as Figure 1a, although it is clear that more iterations are required for EM on all runs.
+
+The larger number of iterations does not imply longer runtimes.  Figure 1f shows the implied relative calculation load, which is calculated as:
+\[
+\frac{\text{EM seconds per iteration}}{\text{QN2 seconds per iteration}}
+\]
+
+The frequency plot is centered around 0.05, which indicates that, on average, a QN2 iteration takes roughly 20 times longer than an EM iteration.
+
+\pagebreak
+\subsection{Results: Size 5 Mixtures}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=16cm]{fig_RunData2_K5_init3.png}
+\caption{Results from running EM and QN2 on randomly generated data from poisson mixtures of size 5.  EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the previous section).}
+\end{figure}
+
+EM shows much slower relative performance in size 5 mixture runs.  Except for 1 one run, all EM runs converged to a stationary point, whereas roughly only 73\% 
 
 
 

@@ -17,14 +17,17 @@ filename = "RunData2_K%s_init3" %K
 if K == 2:
     ax1_text = [[0.01,2],[1,0.001]] #faster, slower
     ax5_bins = np.arange(2,5.6,0.125)
+    ax5_linesearch = [1,1000]
     ax6_bins = np.arange(0,0.1,0.005)
 if K == 5:
     ax1_text = [[0.07,10],[2,0.025]] #faster, slower
     ax5_bins = np.arange(2,5.6,0.125)
+    ax5_linesearch = [10,10000]
     ax6_bins = np.arange(0,0.1,0.005)
 if K == 10:
     ax1_text = [[0.02,10],[1,0.025]] #faster, slower
     ax5_bins = np.arange(2,5.6,0.125)
+    ax5_linesearch = [10,3000]
     ax6_bins = np.arange(0,0.1,0.005)
 
 
@@ -254,6 +257,8 @@ ax5.set_title("(f)  "+title+"histogram of\n# iterations")
 ax5.legend()
 '''
 
+linesearchiterations = [[log[-1][1] for log in run] for run in qn_log]
+avglinesearch = np.mean([np.mean(iters) for iters in linesearchiterations])
 for i in range(numinits):
     #ppl.scatter(ax,np.log(em_times[i]),np.log(qn_times[i]),label=initnames[i])
     ppl.scatter(ax5,em_k[i],qn_k[i],label=initnames[i])
@@ -270,6 +275,7 @@ ax5.set_xlabel('EM # iterations')
 ax5.set_ylabel('QN2 # iterations')
 ax5.set_xlim(minrange,maxrange)
 ax5.set_ylim(minrange,maxrange)
+ax5.text(ax5_linesearch[0],ax5_linesearch[1],'Avg # line searches\n= %s'%np.round(avglinesearch,1))
 ax5.legend(loc='upper left')
 
 
@@ -294,3 +300,9 @@ ax6.legend()
 #RunAnalysis(filename)
 
 plt.savefig('fig_'+filename+'.png')
+'''
+fig2,ax = plt.subplots(1)
+labels = [initnames[i] for i in range(numinits)]
+ppl.hist(ax,linesearchiterations,labels=labels)
+plt.show()
+'''
