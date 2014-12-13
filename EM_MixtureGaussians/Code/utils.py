@@ -1,3 +1,6 @@
+# Written by Justin Mao-Jones 12/13/14, jmj418@nyu.edu
+
+
 import pickle
 import numpy as np
 

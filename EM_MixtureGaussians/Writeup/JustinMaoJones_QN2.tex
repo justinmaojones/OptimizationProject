@@ -27,10 +27,14 @@
 \setlength{\oddsidemargin}{.125in}
 \setlength{\textwidth}{6.25in}
 \begin{document}
-\title{SQP Methods for QN2 Quasi Newton Acceleration of the EM Algorithm}
+\title{An SQP Method for QN2 Quasi Newton Acceleration of EM and Comparison With EM}
 \author{Final Project\\CSCI-GA.2945 Numerical Optimization\\Justin Mao-Jones\\New York University}
 \renewcommand{\today}{December 14, 2014}
 \maketitle
+
+\begin{abstract}
+The EM algorithm is a popular method for computing maximum likelihood estimates from incomplete data.  EM's tendency towards slow convergence prompted researches to develop EM "accelerators".  I build upon the QN2 accelerator by \cite{jamshidianj97}, which showed promising results. I show how QN2 construction of the mixture of two Poissons problem can be generalized to the well-known $n$-mixture problem using Sequential Quadratic Programming.  I show that special initial conditions can maintain QN2 SQP equality constraints for mixture problems.  Finally, I apply EM and QN2 SQP to the generalized $n$ mixtures of Poissons problem and compare results.  In these comparisons, I find that, despite the lure of superlinear convergence, QN2 SQP shows worse overall performance than EM due to line search failures.  Here I use Strong Wolfe conditions with backtracking.  I recommend that further work be performed in choosing a better line search strategy for QN2 SQP.
+\end{abstract}
 
 \section{Introduction}
 
@@ -38,21 +42,21 @@ In 1977, \citeauthor*{dempsterlr77} proposed the EM algorithm, which has since b
 
 A drawback of the EM algorithm is its tendency towards slow convergence.  In certain practical applications, the EM algorithm has been shown to exhibit sublinear convergence.  For examples see \cite{lange1995a,jamshidianj93,jamshidianj97}.
 
-Modifications and extensions of the EM algorithm have been proposed to speed up convergence, and are often referred to as "accelerators".  In this project, I focus on one particular accelerator, dubbed QN2, introduced by \cite{jamshidianj97}.  In that paper, QN2 was applied to the problem of finding the maximum likelihood estimate of a sample set derived from a mixture of 2 Poisson-distributed populations.  That particular example, as well as other examples in \cite{jamshidianj97}, illustrated significant improvements in calculation runtime using QN2.
+Modifications and extensions of the EM algorithm have been proposed to speed up convergence, and are often referred to as "accelerators".  In this project, I focus on one particular accelerator, dubbed QN2, introduced by \cite{jamshidianj97}.  In that paper, QN2 was applied to the problem of finding the maximum likelihood estimate of a sample set derived from a mixture of 2 Poisson-distributed populations.  That particular example, as well as other examples in \cite{jamshidianj97}, illustrated significant improvements in calculation runtime by QN2 over EM.
 
-Motivated by those results, I formulate this project around building my own understanding of EM and QN2 by working through the corresponding derivations and computational application of both.  The QN2 has some very interesting properties that I will discuss.
+Motivated by those findings, I formulated this project around building my own understanding of EM and QN2 through derivations, review of concepts, and computation.  The QN2 has some very interesting properties that I will discuss.
 
-My own contributions are as follows.  I build upon the work by \cite{jamshidianj97} and show how QN2 construction of the mixture of two Poissons problem can be generalized to the well-known $n$-mixture problem.  I show how, when applied to certain problems, QN2 can be formulated as a Sequential Quadratic Programming problem and why this is important for the generalization of the mixture of Poissons problem.  I also investigate special properties of QN2 and show how selection of certain initial conditions can help maintain equality constraints within QN2.  Finally, I apply EM and QN2 to the generalized $n$ mixtures of Poissons problem and compare results, which turn out to be contrary to what I expected. 
+My own contributions are as follows.  I build upon the work by \cite{jamshidianj97} and show how QN2 construction of the mixture of two Poissons problem can be generalized to the well-known $n$-mixture problem using Sequential Quadratic Programming.  I also investigate special properties of QN2 and show how selection of certain initial conditions can help maintain equality constraints within QN2.  Finally, I apply EM and QN2 to the generalized $n$ mixtures of Poissons problem and compare results, which turn out to be contrary to what I expected. 
 
 Before I continue, I would like to say that, while I claim some of the above as my own contributions, I have not performed an exhaustive literature search, and so some of these specific contributions may have already been done elsewhere.  
 
-The structure of this report begins by explaining the derivation of EM and QN2.  For the sake of the interested reader, I include the major steps of the derivation of both the EM and QN2 algorithms and the outline of which mirrors the development of my own understanding of EM and QN2.  I briefly cover relevant convergence concepts as well as some of the finer details of my implementation of QN2, such as line search methodology and termination criteria.  Following that is a report on the computational experiments.
+The structure of this report begins by explaining the derivation of EM and QN2.  For the sake of the interested reader, I include the major steps of the derivation of both the EM and QN2 algorithms, the outline of which mirrors the development of my own understanding of EM and QN2.  Note that the derivation of EM is critical to understanding the formulation of QN2.  I briefly cover relevant convergence concepts as well as some of the finer details of my implementation of QN2, such as line search methodology and termination criteria.  Following that is a report on the computational experiments.
 
 \section{EM Algorithm}
 
 The EM algorithm, otherwise known as expectation-maximization, is a method for computing the maximum likelihood parameter estimates from incomplete data.  Incomplete data is defined as a set of data in which some or all observations contain variables with missing data.  
 
-To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=(\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n)^T$, where $\lambda_r$ parameterizes the poisson probability density of population $r$ and $\gamma_r$ is the prior probability that $x_i$ was chosen from population $r$.  This construction is known as a mixture of poissons.
+To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=(\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n)^T, \theta \in \Re^{2n}$, where $\lambda_r$ parameterizes the poisson probability density of population $r$ and $\gamma_r$ is the prior probability that $x_i$ was chosen from population $r$.  This construction is known as a mixture of poissons.  Formulas are provided below.
 
 We seek to estimate $\theta$ using maximum likelihood.  However, we do not know which of the $n$ populations the observation $x_i$ corresponds to.  Let $z_i \in \{1,...,n\}$ denote the identity of the population that $x_i$ belongs to.  In this example, $\{x_1,...,x_m\}$ is incomplete data, $\{z_1,...,z_m\}$ is missing data, and $\{(x_1,z_1),...,(x_m,z_m)\}$ is the complete (unknown) data.
 
@@ -79,6 +83,11 @@ The probability distribution of the complete data is:
 p(x_i=j,z_i=r|\theta) 
 = p(x_i=j|z_i=r,\theta)p(z_i=r|\theta) = \gamma_r\frac{e^{-\lambda_r}\lambda_r^{j}}{j!}
 \end{equation}
+The probability distribution of the incomplete data is:
+\[
+p(x_i=j|\theta) 
+= \sum_{r=1}^{n} p(x_i=j,z_i=r|\theta)  = \sum_{r=1}^{n}\gamma_r\frac{e^{-\lambda_r}\lambda_r^{j}}{j!}
+\]
 We wish to compute the maximum likelihood estimates, and so we begin with the log likelihood function, which is defined as:
 \[
 l(\theta) = \log(\prod_{i=1}^{m}p(x_i|\theta)) = \sum_{i=1}^{m} \log(p(x_i|\theta))
@@ -89,7 +98,7 @@ This is the point at which a method such as the EM algorithm becomes useful.  Th
 \item \cite{gentletutorial}
 \end{list}
 
-Continuing on with the derivation, since $z_i$ are unobserved, solving for the roots of the derivative of $l(\theta)$ can be an intractable problem:
+Since $z_i$ are unobserved, solving for the roots of the derivative of $l(\theta)$ can be an intractable problem:
 \[
 \sum_{i=1}^{m} \log(p(x_i|\theta)) = \sum_{i=1}^{m} \log\left(\sum_{r=1}^{n}p(x_i,z_i|\theta))\right)
 \]
@@ -120,9 +129,9 @@ l(\theta)
 \prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
 \]
 \[
-=  \sum_{i=1}^{m}\left( \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
+=  \sum_{i=1}^{m}\left( \int_{z_i} p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
 \prod_{j\neq i}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j\right)
-=\sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
+=\sum_{i=1}^{m} \int_{z_i} p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
 \]
 The previous result was derived by putting the $i^{th}$ integral inside of the summation and the log inside of the integral.  The remaining product term is just 1 and so we can remove it.  Now we use Bayes' theorem to derive a useful result:
 \[
@@ -139,6 +148,12 @@ The previous result was derived by putting the $i^{th}$ integral inside of the s
 -
 \sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(z_i|x_i,\theta)\right) dz_i
 \] 
+\[
+=
+E[\log(p(\vec{x},\vec{z}|\theta))|\vec{x},\phi]
+-
+E[\log(p(\vec{z}|\vec{x},\theta))|\vec{x},\phi]
+\]
 \[
 =Q(\theta|\phi)
 -H(\theta|\phi)
@@ -180,7 +195,7 @@ Thus, we have the following EM identity:
 =
 \nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}
 \end{equation}
-One way to think about this identity is that it shows where $\nabla_{\theta}l(\theta)|_{\theta = \phi}$ intersects with  $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ in an extended parameter space.  The EM algorithm moves along this intersection in the hopes of finding a zero.  It just so happens that $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ tends to be much more tractable function than $\nabla_{\theta}l(\theta)|_{\theta = \phi}$.  
+One way to think about this identity is that it shows where $\nabla_{\theta}l(\theta)|_{\theta = \phi}$ intersects with  $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ in an extended parameter space.  The EM algorithm moves along this intersection in the hopes of finding a zero.  Also, it just so happens that $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ tends to be a much more tractable function than $\nabla_{\theta}l(\theta)$.  
 
 This brings us to the specific steps of the EM algorithm, which works as follows.  Given an iterate $\theta_k$, the next iterate $\theta_{k+1}$ is defined as the $\theta$ that maximizes $Q(\theta|\phi)$ where $\phi$ is set to $\theta_k$.
 \[
@@ -207,18 +222,18 @@ and $k < $ \textbf{maxit}}
 
 \cite{wu1983} identified several key convergence properties of the EM algorithm.  I list the relevant those relevant to the aims of this project:
 \begin{list}{-}{}
-\item "If the unobserved complete-data specification of the can by defined by a curved exponential family with compact parameter space, all the limit points of any EM sequence are stationary points of the likelihood function."
+\item "If the unobserved complete-data specification can by defined by a curved exponential family with compact parameter space, all the limit points of any EM sequence are stationary points of the likelihood function."
 \item It cannot be guaranteed that EM converges to the maximum likelihood estimator.
 \item It can be shown that if $Q(\theta|\phi)$ is continuous on both $\theta$ and $\phi$, then the limit points of the sequence of an EM algorithm are stationary points of the likelihood function.  Thus, EM converges to a local maximum.  For exponential family distributions, this continuity condition is satisfied.
 \end{list}
 
 Mixtures of Poissons are within the exponential family, and thus we can assume that the EM algorithm will converge to a stationary point.  Furthermore, since we are working with probabilities, the maximum likelihood function is bounded above by 1. 
 
-Note we do not have enough information about the likelihood function of the mixture of Poissons to determine whether or not we converge to the MLE.  Thus, in the Comparison section below, I discuss results in terms of convergence to stationary points.
+Note we do not have enough information about the likelihood function of the mixture of Poissons to determine whether or not it converges to the MLE.  Thus, in the Comparison section below, I discuss results in terms of convergence to stationary points.
 
 \section{QN2 Algorithm}
 
-The QN2 Algorithm by \cite{jamshidianj97} is described as a Quasi Newton method using Broyden-Fletcher-Goldfarb-Shanno (BFGS) symmetric rank 2 updating.  I will show how it can be applied with Sequential Quadratic Programming to estimate n-dimensional mixture models with equality constraints.   
+The QN2 Algorithm by \cite{jamshidianj97} is described as a Quasi Newton method using Broyden-Fletcher-Goldfarb-Shanno (BFGS) symmetric rank 2 updating.  QN2 is constructed as follows.   
 
 To begin, we define the following:
 \begin{equation} \label{eq:define_g}
@@ -228,7 +243,7 @@ g(\theta_k) = \nabla_{\theta}Q(\theta|\phi)|_{\theta =\theta_k, \phi = \theta_k}
 \begin{equation} \label{eq:define_gsquiggly}
 \tilde{g}(\theta_k) = M(\theta_k) - \theta_k
 \end{equation}
-The first function $g(\theta_k)$ is the gradient of $Q$ with respect to $\theta$ evaluated at $\theta = \theta_k$ and $\phi=\theta_k$.  To simplify notation, I re-write this as $\nabla_{\theta}Q(\theta_k|\theta_k)$.  Note that we will never take a derivative with respect to $\phi$ The second function is the would-be step size of the EM operator $M$.   
+The first function $g(\theta_k)$ is the gradient of $Q$ with respect to $\theta$ evaluated at $\theta = \theta_k$ and $\phi=\theta_k$.  To simplify notation, I re-write this as $\nabla_{\theta}Q(\theta_k|\theta_k)$.  Note that nowhere in this paper will I ever take a derivative with respect to $\phi$ The second function is the would-be step size of the EM operator $M$.   
 
 \cite{jamshidianj93} showed the following property of the EM step:
 \begin{equation} \label{eq:ddq_approx}
@@ -256,15 +271,23 @@ where we define $S$ as a Quasi-Newton approximation to
 \[
 (\nabla^2_{\theta}l(\theta))^{-1}-(\nabla^2_{\theta}Q(\hat{\theta}|\hat{\theta}))^{-1}
 \]
-This approximation will be used to define the Quasi-Newton update step.  Notice that this is a modification to the conventional Quasi-Newton method, because it contains a floating inverse Hessian approximation of $Q(\hat{\theta}|\hat{\theta})$.  The presumption here is that this floating value should aid the overall approximation of the inverse Hessian of the log likelihood, and thus speed up convergence.
+To summarize, let $A$ be an approximation of $(\nabla^2_{\theta}l(\theta))^{-1}$ and $B_0$ be  $(\nabla^2_{\theta}Q(\hat{\theta}|\hat{\theta}))^{-1}$.  Then
+\[
+A = B_0 + S
+\]
+And
+\begin{equation} \label{eq:Ag=g-Sg}
+Ag(\theta) \approx -\tilde{g}(\theta) + Sg(\theta)
+\end{equation}
+This approximation will be used to define the Quasi-Newton update step.  Notice that this is a modification to the conventional Quasi-Newton method, because it contains a floating inverse Hessian approximation of $Q(\hat{\theta}|\hat{\theta})$.  The presumption here is that this floating value should aid the overall approximation of the inverse Hessian of the log likelihood, and thus speed up convergence.  This is rather interesting.
 
-The resulting update step to $\theta_k$ defined below and assumes a line search methodology is used to determine $\alpha_k$, which is described in the next section.  For ease of reading, I make abbreviations such as $g_k = g(\theta_k)$.
+The resulting update step to $\theta_k$ is defined below and assumes a line search methodology is used to determine $\alpha_k$, which is described in the next section.  For ease of reading, I make abbreviations such as $g_k = g(\theta_k)$.
 \[
 \theta_{k+1} = \theta_k - \alpha_k d_k
 \indent
 \text{where}
 \indent
-d_k = \tilde{g}_k(\theta_k) - S_kg(\theta_k)
+d_k = \tilde{g}_k - S_kg_k
 \]
 NOTE: \cite{jamshidianj97} p.575 contains an error in step a, which incorrectly defines $d_k=-\tilde{g}_k(\theta_k) + S_kg(\theta_k)$.
 
@@ -277,34 +300,34 @@ The BFGS update is then derived as follows.  Using the notation used by \cite{ja
 \Delta g_k = g_{k+1} - g_k
 \end{array}
 \]
-The classic BFGS update of the inverse Hessian is (see \cite{nocedalwright_BFGS}, p. 136-140):
+The classic BFGS update of the inverse Hessian is (see \cite{nocedalwright}, p. 136-140) as follows.  Let $A_k$ be the inverse Hessian approximation of $(\nabla^2_{\theta_k}l(\theta_k))^{-1}$.  The update to $A_k$ is:
 \[
-H_{k+1} = (I - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k})H_k(I-\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k})+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
+A_{k+1} = (I - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k})A_k(I-\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k})+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
 \]
 \[
-= H_k - H_k\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k}H_k + \frac{\Delta \theta_k\Delta g_k^TH_k\Delta g_k\Delta \theta_k^T}{(\Delta g_k^T\Delta \theta_k)^2}+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
+= A_k - A_k\frac{\Delta g_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^T}{\Delta g_k^T\Delta \theta_k}A_k + \frac{\Delta \theta_k\Delta g_k^TA_k\Delta g_k\Delta \theta_k^T}{(\Delta g_k^T\Delta \theta_k)^2}+\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k}
 \]
 Thus,
 \[
-\Delta H_k = H_{k+1} - H_k
-= (1+\frac{\Delta g_k^TH_k\Delta g_k}{\Delta g_k^T\Delta \theta_k})\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^TH_k + (\Delta \theta_k\Delta g_k^TH_k)^T}{\Delta g_k^T\Delta \theta_k}
+\Delta A_k = A_{k+1} - A_k
+= (1+\frac{\Delta g_k^TA_k\Delta g_k}{\Delta g_k^T\Delta \theta_k})\frac{\Delta \theta_k\Delta \theta_k^T}{\Delta g_k^T\Delta \theta_k} - \frac{\Delta \theta_k\Delta g_k^TA_k + (\Delta \theta_k\Delta g_k^TA_k)^T}{\Delta g_k^T\Delta \theta_k}
 \]
-If we construct the inverse Hessian approximation as
-\[
-H_k = (\nabla^2_{\theta}Q(\hat{\theta}|\hat{\theta}))^{-1} + S_k
-\]
-then, using Eqn (\ref{eq:ddq_approx}), it follows that
+Using Eqn (\ref{eq:Ag=g-Sg}), it follows that
 \[\begin{array}{c}
-H_k  g_k =  -\tilde{g}_k + S_kg_k
+A_k  g_k \approx  -\tilde{g}_k + S_kg_k
 \\
-H_k  g_{k+1} = -\tilde{g}_{k+1} + S_kg_k
+A_k  g_{k+1} \approx -\tilde{g}_{k+1} + S_kg_{k+1}
 \\
-H_k \Delta g_k = -\Delta \tilde{g}_k + S_k\Delta g_k
+A_k \Delta g_k \approx -\Delta \tilde{g}_k + S_k\Delta g_k
 \end{array}\
+\]
+The size of the update step is
+\[
+A_{k+1} - A_k = B_0 - B_0 + S_{k+1} - S_k = \Delta S_k
 \]
 The QN2 BFGS update step is:
 \begin{equation} \label{eq:BFGS}
-\Delta S_k = H_{k+1} - H_k =
+\Delta S_k = 
 \left(
 1 + \frac{\Delta g_k^T \Delta \theta_k^*}{\Delta g_k^T \Delta \theta}
 \right)
@@ -316,7 +339,7 @@ where
 \[
 \Delta \theta_k^* = -\Delta \tilde{g_k} + S_k \Delta g_k
 \]
-As will be seen in the next section, it is important to initialize $S_0$ to $\boldsymbol{0}$.
+As will be seen in the next section, it is important to initialize $S_0$ to $\boldsymbol{0}_{2n \times 2n}$.
 
 \subsection{Constraints}
 The problem of finding the maximum likelihood estimate is often a constrained optimization problem.  For example, in the mixture of poissons, we have the following constraints:
@@ -331,12 +354,11 @@ r \in \{1,...,n\}
 
 Here $(\lambda_k)_r$ and $(\gamma_k)_r$ are defined as the $\lambda$ and $\gamma$ parameters, respectively, of population $r$ at iteration $k$.  While I have not performed an exhaustive literature search, it seems there is a tendency in the literature to ignore all but the equality constraint.  The presumption then must be that in practical problems, the maximum likelihood estimate exists strictly inside the feasible region.  
 
-In the mixture of poissons example, this would make sense.  $(\lambda_k)_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  $(\gamma_k)_r$ cannot become zero, because, as will be shown later, the derivative would go to infinity.  Similarly, $(\gamma_k)_r$ cannot become $1$ either, since a value of $1$ in any $(\gamma_k)_r$ would imply a zero in the other $\gamma$'s.
+In the mixture of poissons example, this would make practical sense.  $(\lambda_k)_r=0$ would require that all observations have value $0$, and thus maximum likelihood estimation would not be useful.  $(\gamma_k)_r$ cannot become zero, because, as will be shown later, the derivative would go to infinity.  Similarly, $(\gamma_k)_r$ cannot become $1$ either, since a value of $1$ in any $(\gamma_k)_r$ would imply a zero in the other $\gamma$'s.
 
-In order to enforce the inequality parameter constraints, we use the following pseudo line search method:
+In order to enforce the inequality parameter constraints, we use the following pseudo line search method described in \cite{jamshidianj97}:
  
-
-\begin{algorithm}
+\begin{algorithm}[H]
 \caption{Constraint Enforcement}
 \label{alg:constraint_enforecement}
 \begin{algorithmic}[1]
@@ -349,7 +371,7 @@ In order to enforce the inequality parameter constraints, we use the following p
 \end{algorithmic}
 \end{algorithm}
 
-The equality parameter constraint can be handled by appropriate initialization of $\theta_0$ and $S_0$.  To explain why, consider that at iteration $k$, we assume the relationship $\sum_{r=1}^{n}[\gamma_{k}]_r=1$ holds.  Then, in order for Eqn (\ref{eqn:equalityconstraint}) to be satisfied at each successive iteration $k+1$, the step along the $\gamma$ parameters $\Delta \gamma_k = \gamma_{k+1} - \gamma_k = \alpha_k(d_k)_{\gamma}$ must satisfy the relationship
+Now I show how the equality parameter constraint can be handled by appropriate initialization of $\theta_0$ and $S_0$.  To explain why, consider that at iteration $k$, we assume the relationship $\sum_{r=1}^{n}[\gamma_{k}]_r=1$ holds.  Then, in order for Eqn (\ref{eqn:equalityconstraint}) to be satisfied at each successive iteration $k+1$, the step along the $\gamma$ parameters $\Delta \gamma_k = \gamma_{k+1} - \gamma_k = \alpha_k(d_k)_{\gamma}$ must satisfy the relationship
 \begin{equation} \label{eq:gammastepzero}
 \sum_{r=1}^{n} [\Delta \gamma_k]_r
 =
@@ -362,11 +384,11 @@ Thus, $\sum_{r=1}^{n}[\gamma_{k+1}]_r=1$ if and only if $\sum_{r=1}^{n} [\Delta 
 =
 \sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r - [(S_kg_k)_{\gamma}]_r = 0
 \end{equation}
-First, assume that the following is true for $S_{k}$ and any vector $v \in \Re^{2n}$:
+Here terms such as $(\circ)_{\gamma}$ refer to the $\gamma$ components (i.e. the first $n$ components) of $\circ$.  First, assume that the following is true for $S_{k}$ and any vector $v \in \Re^{2n}$:
 \begin{equation} \label{eqn:Sgzero}
 \sum_{r=1}^{n} [(S_{k}v)_{\gamma}]_r = 0
 \end{equation}
-Second, consider $\sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r$:
+Second, consider:
 \begin{equation} \label{eq:gsquigglyzero}
 \sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r
 =
@@ -376,7 +398,7 @@ Second, consider $\sum_{r=1}^{n} [(\tilde{g}_k)_{\gamma}]_r$:
 \end{equation}
 which holds true for all $k$.  By definition, $M(\theta_k)$ is another estimate of $\theta$ that satisfies all parameter constraints.  An explicit example of $M(\theta_k)$ is provided in Section \ref{section:poisson}
 
-By assumption (\ref{eqn:Sgzero}) and Eqn (\ref{eq:gsquigglyzero}), Eqn (\ref{eq:dstepzero}) holds true, and thus Eqn (\ref{eq:gammastepzero}) holds for $k$.  However, this does not yet prove that Eqn (\ref{eq:gammastepzero}) will hold for iteration $k+1$ or any other subsequent iterations.  
+Then by assumption (\ref{eqn:Sgzero}) and Eqn (\ref{eq:gsquigglyzero}), Eqn (\ref{eq:dstepzero}) holds true, and thus Eqn (\ref{eq:gammastepzero}) holds for $k$.  However, this does not yet prove that Eqn (\ref{eq:gammastepzero}) will hold for iteration $k+1$ or any other subsequent iterations.  
 
 Thus, now we need to show that:
 \begin{equation} \label{eq:dpluszero}
@@ -457,15 +479,15 @@ where $a,b,c$ are constants (which need not be derived).  It follows that
 \[
 \sum_{r=1}^{n}[(S_{k+1}u)_{\gamma}]_r = 0
 \]
-Ergo, Eqn (\ref{eq:gammastepzero}) must also be true for $k+1$ and, by induction, must hold for all $k$, as long as $S_0$ is chosen such that:
+Ergo, Eqn (\ref{eq:gammastepzero}) must also be true for $k+1$ and, by induction, must hold for all $k$, as long as $S_k$ is chosen appropriately.  It follows that we should choose $S_0$ such that:
 \[
 \sum_{r=1}^{n}[(S_{0}u)_{\gamma}]_r = 0
 \]
-Hence, we should choose $S_0 = \boldsymbol{0}$.  This is an interesting result of the BFGS update to QN2 on mixture problems that assume the construction $p(z_i=r|\theta)=\gamma_r$ that allows us to maintain feasibility in the equality constraint.  The next section discusses how to construct QN2 as a Newton Lagrange method.
+Hence, we should choose $S_0 = \boldsymbol{0}_{2n \times 2n}$.  This is an interesting result of the BFGS update applied to QN2 on mixture problems that assume the construction $p(z_i=r|\theta)=\gamma_r$.  It allows us to maintain feasibility in the equality constraint in all iterations.  
 
 \subsection{Sequential Quadratic Programming Method of QN2}
 
-Another nice property of $p(z_i=r|\theta)=\gamma_r$ for QN2 is that the Lagrange multiplier $\lambda^*$ at the optimal solution is easy to compute.  The Lagrangian function of Eqn (\ref{eq:QH}) is:
+In this section I show how to construct QN2 as an SQP in order to appropriately handle the equality constraint.  Another nice property of $p(z_i=r|\theta)=\gamma_r$ for QN2 is that the Lagrange multiplier $\lambda^*$ at the optimal solution is easy to compute.  The Lagrangian function of Eqn (\ref{eq:QH}) is:
 \[
 \mathcal{L}(\theta,\lambda) = l(\theta) - \lambda(\sum_{r=1}^{n}\gamma_r - 1)
 \]
@@ -530,7 +552,7 @@ Thus,
 \[
 \lambda^* = \frac{1}{m}
 \]
-This is a well-known result of mixtures.  With it, we can show how to formulate QN2 within the SQP construct. The SQP can be formulated as follows.  See \cite{nocedalwright_SQP} for more details.
+This is a well-known result of mixtures.  With it, we can show how to formulate QN2 within the SQP construct. The SQP can be formulated as follows.  See \cite{nocedalwright} p. 530-532 for more details.
 \[
 \left[
 \begin{array}{cc}
@@ -600,19 +622,19 @@ d_k = \tilde{g}_k-S_k\bar{g}
 \indent
 \bar{g}_k = g_k-\lambda^*J^T
 \]
-Note that this has not altered our approximation of $S_k$, since at each BFGS update we are concerned with $\Delta g_k$.  Furthermore, it was shown in Eqn (\ref{eq:Suzero}) that the equality constraints will still hold in all iterations with this new formulation.
+Note that this has not altered our approximation of $S_k$, since at each BFGS update we are concerned with $\Delta g_k$, in which the $\lambda^*J^T$ terms cancel out.  Furthermore, it was shown in Eqn (\ref{eq:Suzero}) that the equality constraints will still hold in all iterations with this new formulation.
 
 \subsection{Line Search}
 
-\cite{jamshidianj97} use the line search described by \cite{jamshidianj93}, with initial step length equal to 2.  I will not refer to that here and instead use the Armijo and Wolfe sufficient increase conditions (i.e. the Strong Wolfe conditions) to perform the line search.  These steps are outlined below.  The step size $\alpha_k$ is initialized using the output from the constraint enforcement step (\ref{alg:constraint_enforecement}) to ensure that all line search function evaluations occur within the feasible region.
+\cite{jamshidianj97} use the line search described by \cite{jamshidianj93}, with initial step length equal to 2.  I will not refer to that here and instead use the Armijo and Wolfe sufficient increase conditions (i.e. the Strong Wolfe conditions) with backtracking to perform the line search.  These steps are outlined below.  See \cite{wrightlecturenotes} Lecture Notes 5, p. 155 for more details.  The step size $\alpha_k$ is initialized using the output from the constraint enforcement step (\ref{alg:constraint_enforecement}) to ensure that all line search function evaluations occur within the feasible region.
 
 
-\begin{algorithm} 
+\begin{algorithm} [H]
 \caption{Strong Wolfe (i.e. Armijo/Wolfe) Line Search}
 \label{alg:armijo_wolfe}
 \begin{algorithmic}[1]
-\State Given $\theta_k$
-\State $\alpha_k = <$constraint enforcement output$>$
+\State Given $\theta_k, d_k$
+\State $\alpha_k =$ ConstraintEnforcement($\theta,d$) 
 \State $\eta_s = 10^{-4}$
 \State $\eta_w = 0.99$
 \State $T = 10$
@@ -620,7 +642,7 @@ Note that this has not altered our approximation of $S_k$, since at each BFGS up
 \While{
 $l(\theta_k + \alpha_k d_k) - l(\theta_k) \geq \eta_s \alpha_k \bar{g}_k^Td_k$
 and
-$\bar{g}_k^Td_k \leq \eta_w \bar{g}(\theta_k+\alpha_k d_k)^Td_k$
+$|\bar{g}(\theta_k+\alpha_k d_k)^Td_k| \leq \eta_w|\bar{g}_k^Td_k|$
 and
 $t < T$
 }
@@ -636,11 +658,11 @@ $t < T$
 \end{algorithmic}
 \end{algorithm}
 
-This line search runs until it either finds an $\alpha_k$ that satisfies the Strong Wolfe Conditions or else terminates if the number of line search attempts exceeds the maximum 10 attempts, in which case we consider the line search a failure.  If the line search fails, we "restart" QN2 by re-initializing $S$ to $S_0$.
+This line search runs until it either finds an $\alpha_k$ that satisfies the Strong Wolfe Conditions or else terminates if the number of line search attempts exceeds the maximum 10 attempts, in which case we consider the line search a failure.  If the line search fails, we "restart" QN2 by re-initializing $S_k$ to $S_0$.
 
 \subsection{Convergence} \label{section:qn2convergence}
 
-A nice property of the BFGS update is that, assuming the objective function is twice continuously differentiable with a compact level set, and the initial Hessian approximation os symmetric negative definite, then the sequence of iterates will converge to a maximizer (see \cite{nocedalwright_BFGS}).  
+A nice property of the BFGS update is that, assuming the objective function is twice continuously differentiable with a compact level set, and the initial Hessian approximation is symmetric negative definite, then the sequence of iterates will converge to a maximizer (see \cite{nocedalwright}).  
 
 Given the special structure of QN2, however, I hesitate to translate that assumption to QN2.  While \cite{jamshidianj97} showed that $\nabla_\theta^2Q(\hat{\theta}|\hat{\theta})$ is negative definite, the structure of QN2 is quite special, and more work would need to be done to explore its convergence properties.  Given more time, I would have pursued this.  For now, this remains an unknown for the project.
 
@@ -657,8 +679,7 @@ rg = \max_i
 \right]
 < f_{tol}
 \end{equation}
-
-An alternative merit function is the 2-norm of $\bar{g}_k$.
+Note that where \cite{jamshidianj97} use $g$, I use $\bar{g}$.  An alternative merit function is the 2-norm of $\bar{g}_k$.
 
 \subsection{Initialization}
 
@@ -675,9 +696,9 @@ S_0 = \boldsymbol{0}_{2n \times 2n}
 
 \subsection{Algorithm Summary}
 
-For completion, I summarize the major steps of my implementation of the QN2 algorithm below.
+Below I summarize the major steps of my implementation of the QN2 algorithm.
 
-\begin{algorithm} 
+\begin{algorithm} [H]
 \caption{QN2 Implementation}
 \label{alg:qn2}
 \begin{algorithmic}[1]
@@ -716,7 +737,7 @@ $rg \geq f_{tol}$ and $k <$ maxit}
 \State $\tilde{g} = \tilde{g}+\Delta \tilde{g}$
 \State $S = S +\Delta S$
 \Else
-\State $S = \boldsymbol{0}$
+\State $S = \boldsymbol{0}_{2n \times 2n}$
 \EndIf
 \EndWhile
 \end{algorithmic}
@@ -725,7 +746,7 @@ $rg \geq f_{tol}$ and $k <$ maxit}
 
 \section{Mixture of Poissons} \label{section:poisson}
 
-\cite{jamshidianj97} provide the gradient and EM operator solutions for a two mixture Poisson, while using $\gamma,1-\gamma$ to model $\gamma_1,\gamma_2$.  This approach is fine in 2 dimensions, but becomes significantly more complicated in higher dimensions.  Here I list the computations for the generalized n-mixture Poisson problem.
+\cite{jamshidianj97} provide the gradient and EM operator solutions for a mixture two poissons, while using $\gamma,1-\gamma$ to model $\gamma_1,\gamma_2$.  This approach is fine in 2 dimensions, but becomes significantly more complicated in higher dimensions.  Here I list the computations for the generalized n-mixture Poisson problem.
 
 Given a mixture of $n$ poissons parameterized by $\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n$, the gradient of the Lagrange function is as follows:
 \[
@@ -750,7 +771,7 @@ c_j = \sum_{i=1}^{m}1_{x_i=j}
 \indent
 J = \max(x_i)
 \]
-$[\gamma_{\phi}]$ and $[\lambda_{\phi}]$ are the $\gamma$ and $\lambda$ elements of $\phi$.
+Here $w_{rj}$ is parameterized by $\phi$ and $[\gamma_{\phi}]$ and $[\lambda_{\phi}]$ are the $\gamma$ and $\lambda$ elements of $\phi$.
 
 The EM operator $M(\theta_k)$ for the mixture of poissons is determined by solving for the zero of the derivative of the Lagrange function with respect to $\theta$ conditional on $\phi=\theta_k$.  At the maximum likelihood estimate, $M(\theta_k)=\theta_k$.
 \[
@@ -758,7 +779,6 @@ The EM operator $M(\theta_k)$ for the mixture of poissons is determined by solvi
 \indent
 [\lambda_{k+1}]_r = \frac{\sum_{j=0}^{J}jw_{rj}c_j}{\sum_{j=0}^{J}w_{rj}c_j}
 \]
-
 The log likelihood function is:
 \[
 l(\theta) = \sum_{j=1}^{J}c_j\log\left({\sum_{r=1}^{n}\gamma_r\frac{e^{-\lambda_r}\lambda_r^j}{j!}}\right)
@@ -777,17 +797,17 @@ e^{-\lambda_r+j\log(\lambda_r)-\sum_{i=0}^{j}\log(j)}
 
 \section{Comparison of EM and QN2 SQP on Mixtures of Poissons}
 
-My implementation of EM and QN2 SQP is written in the Python programming language version 2.7.6.  All simulations were run in iPython 1.2.1 using a T420 Lenovo Thinkpad, with a Intel Core i5-2520M CPU 2.50GHz x 4A processor with 3.7GB of RAM on a Ubuntu 14.04 operating system.  A copy of the code is provided as a supplement to this paper.
+My implementation of EM and QN2 SQP is written in the Python programming language version 2.7.6.  All simulations were run in iPython 1.2.1 using a T420 Lenovo Thinkpad, with an Intel Core i5-2520M CPU 2.50GHz x 4A processor with 3.7GB of RAM on a Ubuntu 14.04 operating system.  A copy of the code is provided as a supplement to this paper.
 
-The scope of my comparison EM and QN2 SQP encompasses "practical problems", rather than edge-case problems.  I build a random problem generator, which I use to generate a large sample of problems on which I run EM and QN2 SQP.  
+My comparison of EM and QN2 SQP encompasses "practical problems", rather than edge-case problems.  I build a random problem generator, which I use to generate a large sample of problems on which I run EM and QN2 SQP.  
 
 From a practical perspective, two high level criteria for comparing algorithms are speed and reliability.  From the user's perspective, speed is execution time, and reliability is whether or not the algorithm converges to the solution.  Therefore, I compare convergence rates, execution times, convergence failures, and solutions.
 
-I run comparisons on a mixtures of 2 Poissons (sample size 3000), 5 Poissons (sample size 3000), and 10 Poissons (sample size 3000).  For each mixture size, EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the next section).
+I run comparisons on mixtures of 2 poissons (sample size 3000), 5 poissons (sample size 3000), and 10 poissons (sample size 3000).  For each mixture size, EM and QN2 were each tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the next section).  That is a total of 1800 runs.
 
 \subsection{Random Problem Generator}
 
-I generate hidden samples $z_1,...,z_m$ from a multinomial distribution parameterized by random p-values.  Next, I generate a $\lambda$ values for each of the $n$ Poisson distributions using an exponential distribution with mean $1/10$.  Then I generate sample observations $x_1,...,x_m$ where observation $x_i$ generated from Poisson distribution $z_i$, which is parameterized by $\lambda_{z_i}$.  Finally, only the sample observations $x_1,...,x_m$ are passed to each algorithm.
+I generate hidden samples $z_1,...,z_m$ from $m$ multinomial distribution of size 1 parameterized by random $\gamma$ values.  Next, I generate $\lambda$ values for each of the $n$ Poisson distributions using an exponential distribution with mean $1/10$.  Then I generate sample observations $x_1,...,x_m$ where observation $x_i$ is generated from poisson distribution $z_i$, which is parameterized by $\lambda_{z_i}$.  Finally, only the sample observations $x_1,...,x_m$ are passed to each algorithm.
 
 \subsection{Initialization}
 
@@ -817,7 +837,7 @@ Initialization C:
 \lambda_0 = [1,...,n]^T
 \]
 
-As an aside, any point in which $\lambda_1 = \dots = \lambda_n$ is a stationary point, and very likely not the maximum likelihood estimator.
+As an aside, any point in which $\lambda_1 = \dots = \lambda_n$ is a stationary point, though very likely not the maximum likelihood estimator.
 
 \pagebreak
 \subsection{Results: Size 2 Mixtures}
@@ -825,18 +845,18 @@ As an aside, any point in which $\lambda_1 = \dots = \lambda_n$ is a stationary 
 \begin{figure}[h]
 \centering
 \includegraphics[width=16cm]{fig_RunData2_K2_init3.png}
-\caption{Results from running EM and QN2 on randomly generated data from poisson mixtures of size 2.  EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the previous section).}
+\caption{Results from running EM and QN2 SQP on randomly generated data from poisson mixtures of size 2.  EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 SQP were each run from 3 different starting points, A,B,and C (described in the previous section).}
 \end{figure}
 
-Figure 1a shows a scatter plot of the runtimes for each problem, with EM runtimes on the x-axis and QN2 runtimes on the y-axis.  The color scale refers to the initialization points A, B, and C.  Points below the dotted line correspond to problems in which EM took longer than QN2 to terminate.  Note that the runtimes are on a log scale.  
+Figure 1a shows a scatter plot of the runtimes for each problem, with EM runtimes on the x-axis and QN2 SQP runtimes on the y-axis.  The color scale refers to the initialization points A, B, and C.  Points below the dotted line correspond to problems in which EM took longer than QN2 SQP to terminate.  Note that the runtimes are on a log scale.  
 
-Given EM's reputation for slow convergence and Quasi-Newton's reputation for superlinear convergence, it is surprising to find that, overall, EM tends to finish before QN2.  However, we can see that EM runtimes have a tendency to "explode", corresponding to sublinear convergence, lending credence to EM's reputation.  QN2 runtimes, on the other hand, tend to lie in a much narrower band (roughly between $10^{-2.5}$ and $10^{-1}$ seconds).
+Given EM's reputation for slow convergence and Quasi-Newton's reputation for superlinear convergence, it is surprising to find that, overall, EM tends to finish before QN2 SQP.  However, we can see that EM runtimes have a tendency to "explode", corresponding to sublinear convergence, lending credence to EM's reputation.  QN2 SQP runtimes, on the other hand, tend to lie in a much narrower band (roughly between $10^{-2.5}$ and $10^{-1}$ seconds).  From this speed perspective, QN2 SQP seems more dependable.
 
-Figures 1b measures one aspect of reliability: how often does the algorithm terminate at a stationary point?  Convergence to a stationary point is defined $rg(\theta_k) \leq f_{tol}$, where $rg(\theta_k)$ is the merit function defined Eqn (\ref{eq:rg}).  All EM runs successfully terminated at a stationary point.  Not all of the QN2 runs converged to a stationary point.  QN2 runs that failed to convergence did so because the line search failed.  Recall that as part of the QN2 algorithm, if line search fails, then $S_k$ is reset to $\boldsymbol{0}_{2n \times 2n}$.  If after this reset line search fails again, then QN2 has no more options and consequently breaks and returns an error.  QN2 with initialization B shows the worst performance.  Further work could be done to determine more successful line search strategies for QN2.
+Figures 1b measures an aspect of reliability: how often does the algorithm terminate at a stationary point?  Convergence to a stationary point is defined as $rg(\theta_k) \leq f_{tol}$, where $rg(\theta_k)$ is the merit function defined Eqn (\ref{eq:rg}).  All EM runs successfully terminated at a stationary point.  Not all of the QN2 SQP runs converged to a stationary point.  QN2 SQP runs that failed to converge did so because the line search failed.  Recall that as part of the QN2 SQP algorithm, if line search fails, then $S_k$ is reset to $\boldsymbol{0}_{2n \times 2n}$.  If after this reset line search fails again, then QN2 SQP has no more options and consequently breaks and returns an error.  QN2 SQP with initialization B shows the worst performance.  Further work could be done to determine more successful line search strategies for QN2 SQP.
 
-Figure 1c measures another aspect of reliability: did the algorithm converge to the largest likelihood?  Here I loosely defined a tolerance range of $10^{-3}$ for comparing one log likelihood function value to another.  Meaning that values with $10^{-3}$ of each other are considered the same.  This threshold seemed to sufficiently capture nearly all of the of the "close" values.  Initialization B shows a lower reliability in both EM and QN2 runs.
+Figure 1c measures another aspect of reliability: did the algorithm converge to the largest likelihood?  Here I loosely defined a tolerance range of $10^{-3}$ for comparing one log likelihood function value to another, meaning that values within $10^{-3}$ of each other are considered the same.  This threshold seemed to sufficiently capture nearly all of the of the "close" values.  Initialization B shows a lower reliability in both EM and QN2 SQP runs.
 
-Figure 1d plots a histogram of the observed convergence rates of EM and QN2.  Since optimal points are unknown, the convergence rate $r$ at iteration $k$ is loosely defined as:
+Figure 1d plots a histogram of the observed convergence rates of EM and QN2 SQP.  Since optimal points are unknown, the convergence rate $r$ at iteration $k$ is loosely defined as:
 \[
 \frac{|rg(\theta_k+1)|}{|rg(\theta_k)|^r} = 1
 \indent
@@ -846,16 +866,16 @@ r = \frac{\log(rg(\theta_k+1))}{\log(rg(\theta_k))}
 \]
 The reported convergence rates are the average of the convergence rate in the final 2 iterations for each run.  Convergence rates were not included for runs that terminated without converging.
 
-Figure 1d shows unsurprising results.  EM shows linear convergence and QN2 shows superlinear convergence.
+Figure 1d shows unsurprising results.  EM shows linear convergence and QN2 SQP shows superlinear convergence.
 
-Figure 1e is another scatter plot showing the number of iterations required to terminate.  Each dot represents the EM iterations vs the QN2 iterations for a given problem and given initialization.  This plot shows the same behavior as Figure 1a, although it is clear that more iterations are required for EM on all runs.  The average number of QN2 line searches is 2.3.
+Figure 1e is another scatter plot showing the number of iterations required to terminate.  Each dot represents the EM iterations vs the QN2 SQP iterations for a given problem and given initialization.  This plot shows the same behavior as Figure 1a, although it is clear that more iterations are required for EM on all runs.  The average number of QN2 SQP line searches is 2.3.
 
 The larger number of iterations does not imply longer runtimes.  Figure 1f shows the implied relative calculation load, which is calculated as:
 \[
-\frac{\text{EM seconds per iteration}}{\text{QN2 seconds per iteration}}
+\frac{\text{EM seconds per iteration}}{\text{QN2 SQP seconds per iteration}}
 \]
 
-The frequency plot is centered around 0.05, which indicates that, on average, a QN2 iteration takes roughly 20 times longer than an EM iteration.
+The frequency plot is centered around 0.05, which indicates that, on average, a QN2 SQP iteration takes roughly 20 times longer than an EM iteration.
 
 \pagebreak
 \subsection{Results: Size 5 Mixtures}
@@ -863,31 +883,50 @@ The frequency plot is centered around 0.05, which indicates that, on average, a 
 \begin{figure}[h]
 \centering
 \includegraphics[width=16cm]{fig_RunData2_K5_init3.png}
-\caption{Results from running EM and QN2 on randomly generated data from poisson mixtures of size 5.  EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the previous section).}
+\caption{Results from running EM and QN2 SQP on randomly generated data from poisson mixtures of size 5.  EM and QN2 SQP were tested on a total of 100 randomly generated problems.  EM and QN2 SQP were each run from 3 different starting points, A,B,and C (described in the previous section).}
 \end{figure}
 
-EM shows much slower relative performance in size 5 mixture runs.  Except for 1 one run, all EM runs converged to a stationary point, whereas roughly only 73\% of QN2 terminated at a stationary point.  Again, QN2 initialized on B performed the worst.  The relative calculation load averages at roughly 0.02, meaning approximately 50 EM iterations per 1 QN2 iteration.  This contrasts with the 20:1 ratio seen for size 2 mixtures.  This makes sense given that the number of QN2 line searches has increased dramatically from 2.3 to 141.
+EM shows much slower relative performance in size 5 mixture runs.  Except for one run, all EM runs converged to a stationary point, whereas roughly only 73\% of QN2 SQP terminated at a stationary point.  Again, QN2 SQP initialized on B performed the worst.  The relative calculation load averages at roughly 0.02, meaning approximately 50 EM iterations per 1 QN2 SQP iteration.  This is an increase from the 20:1 ratio seen for size 2 mixtures, indicating that the calculation load for QN2 is growing with mixture size.  This makes sense given that the number of QN2 SQP line searches has increased dramatically from 2.3 to 141.
 
 \pagebreak
 \subsection{Results:  Size 10 Mixtures}
 \begin{figure}[h]
 \centering
 \includegraphics[width=16cm]{fig_RunData2_K10_init3.png}
-\caption{Results from running EM and QN2 on randomly generated data from poisson mixtures of size 10.  EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the previous section).}
+\caption{Results from running EM and QN2 SQP on randomly generated data from poisson mixtures of size 10.  EM and QN2 SQP were tested on a total of 100 randomly generated problems.  EM and QN2 SQP were each run from 3 different starting points, A,B,and C (described in the previous section).}
 \end{figure}
 
-Here we see that the division in runtimes between EM and QN2 is roughly even.  In fact, the spread in the scattor plot also look much more even than in mixtures of size 2 and 5.  The convergence to stationary point success of EM is again perfect, but that of QN2 has decreased further to approximately 59\%.  The distribution of QN2 convergence rates has also decreased somewhat from that for size 2 mixtures.  The average number of QN2 line searches has increased again to 321.5, which is more than double that seen for size 5 mixtures.  The relative calculation load hovers around 0.015, which implies a 66:1 EM iterations to QN2 iterations ratio.
+Here we see that the division in runtimes between EM and QN2 SQP is roughly even.  The spread in the scattor plot also look much more even than in mixtures of size 2 and 5.  Interestingly, the spread of QN2 SQP runtimes is greater than that of EM.  Thus, from a speed perspective, EM looks better.
+
+The ability of EM to converge to a stationary point is again perfect, but that of QN2 SQP has decreased further to approximately 59\%.  The distribution of QN2 SQP convergence rates has also decreased somewhat from that for size 2 mixtures.  The average number of QN2 SQP line searches has increased further to 321.5, which is more than double that seen for size 5 mixtures.  The relative calculation load hovers around 0.015, which implies a 66:1 EM iterations to QN2 SQP iterations ratio.
 
 \subsection{Discussion}
 
-Two themes arise from these results.  EM shows little difference in performance across mixture sizes.  QN2 shows worsening performance.
+Two themes arise from these results.  EM shows little difference in performance across mixture sizes.  QN2 SQP shows worsening performance.  The promising results in \cite{jamshidianj97} are tempered by these findings.
 
-The reason for QN2's worsening performance lies in the number of line searches required.  This is seen in a couple of ways.  First is the increase in convergence failures.  Second is the relative calculation load.  Further work could be done to find better line search strategies. 
+The reason for QN2 SQP's worsening performance lies in the number of line searches required.  This is seen in a couple of ways.  First is the increase in convergence failures.  Second is the relative calculation load.  Further work could be done to find better line search strategies for QN2 SQP.
 
-As expected, EM showed linear/sublinear convergence and QN2 showed superlinear convergence.  As discussed in sections \ref{section:convergence} and \ref{section:qn2convergence}, given my current understanding and knowledge of the mixture of Poissons likelihood function, not much can be said about convergence to the a local maximizer.  Furthermore, Figures 1c, 2c, and 3c show that convergence to the global maximizer is not guaranteed, and is dependent on algorithm selection and initialization.
+Even though EM showed linear convergence while QN2 SQP showed superlinear convergence, the overall calculation load of QN2 SQP grew substantially, rendering QN2 SQP's relative advantage in convergence rate irrelevant.
 
-In summary, the expected speed improvements of QN2 come with a catch.
+As discussed in sections \ref{section:convergence} and \ref{section:qn2convergence}, given my current understanding and knowledge of the mixture of Poissons likelihood function, not much can be said about convergence to the MLE, which is a disadvantage of both EM and QN2 SQP.  Furthermore, Figures 1c, 2c, and 3c show that convergence to the global maximizer is not guaranteed, and is dependent on algorithm selection and initialization.
 
+In summary, the expected speed improvements of QN2 SQP are seen in smaller sized mixtures, but as the mixture size grows, EM tends to be the better option.  From a practical perspective, EM looks to be the better choice across all mixture sizes.  The runtime for mixture size two for EM is rather low.  For larger mixture sizes, EM and QN2 SQP are not that much different.  EM is much more reliable in terms of convergence than QN2 SQP.  Furthermore, the amount of thinking and work required to implement a QN2 SQP algorithm is much higher than that for EM.  Therefore, I concede that for mixtures of poissons and for this specific implementation of QN2 SQP, EM is the better algorithm.
+
+\section{Supplementary Files}
+\begin{verbatim}
+
+Code:
+ - readme.txt (see this for descriptions of code and data files)
+ - PoissonQN2_MultiMixture.py
+ - PoissonQN2_Multi_TestRuns.py
+ - Analysis.py
+ - utils.py
+
+Results Data:
+ - RunData2_K2_init3.pk1
+ - RunData2_K5_init3.pk1
+ - RunData2_K10_init3.pk1
+\end{verbatim}
 
 \pagebreak
 \bibliographystyle{plainnat}

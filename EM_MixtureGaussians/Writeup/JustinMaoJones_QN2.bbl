@@ -16,6 +16,12 @@ A.~P. Dempster, N.~M. Laird, and D.~B. Rubin.
 \newblock Maximum likelihood from incomplete data via the em algorithm.
 \newblock \emph{J. R. Statist. Soc.}, B\penalty0 (39):\penalty0 1--38, 1997.
 
+\bibitem[Gill and Wright(2014)]{wrightlecturenotes}
+P.E. Gill and M.~H. Wright.
+\newblock Advanced topics in numerical analysis: Numerical optimization lecture
+  notes (csci-ga.2495-001).
+\newblock \emph{New York University}, 2014.
+
 \bibitem[Jamshidian and Jennrich(1993)]{jamshidianj93}
 Mori Jamshidian and Robert~I. Jennrich.
 \newblock Conjugate gradient acceleration of the em algorithm.
@@ -43,15 +49,10 @@ Geoffrey~J. McLachlan and Thriyambakam Krishnan.
 \newblock \emph{The EM Algorithm and Extensions}.
 \newblock 1st edition.
 
-\bibitem[Nocedal and Wright({\natexlab{a}})]{nocedalwright_BFGS}
+\bibitem[Nocedal and Wright()]{nocedalwright}
 Jorge Nocedal and Stephen~J. Wright.
 \newblock \emph{Numerical Optimization}.
-\newblock 2nd edition, {\natexlab{a}}.
-
-\bibitem[Nocedal and Wright({\natexlab{b}})]{nocedalwright_SQP}
-Jorge Nocedal and Stephen~J. Wright.
-\newblock \emph{Numerical Optimization}.
-\newblock 2nd edition, {\natexlab{b}}.
+\newblock 2nd edition.
 
 \bibitem[Wu(1983)]{wu1983}
 C.~F.~Jeff Wu.

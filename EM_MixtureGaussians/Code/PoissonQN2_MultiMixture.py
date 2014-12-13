@@ -1,3 +1,6 @@
+# Written by Justin Mao-Jones 12/13/14, jmj418@nyu.edu
+
+
 import numpy as np
 import numpy.linalg as la
 import math
@@ -61,23 +64,6 @@ def f_(j,theta):
     gammas,thetas = theta_array(theta)
     return np.sum(gammas*np.exp(-thetas)*thetas**j/math.factorial(j))
 
-'''
-def f_tilda_(k,j,theta):
-    gammas,thetas = theta_list(theta)
-    t = thetas[k]
-    f = math.exp(-t)*t**j/math.factorial(j)
-    return gammas[k]*f
-    
-def f_tilda_array(j,theta):
-    gammas,thetas = theta_array(theta)
-    return gammas*np.exp(-thetas)*thetas**j/math.factorial(j)
-
-def f_tilda_array2d_old(J,theta):
-    gammas,thetas = theta_array(theta)
-    gammas = gammas.reshape(-1,1)
-    thetas = thetas.reshape(-1,1)
-    return gammas*np.exp(-thetas)*thetas**J/scipy.misc.factorial(J)
-'''
     
 def f_tilda_array2d(C,theta):
     gammas,thetas = theta_array(theta)
@@ -225,8 +211,8 @@ def linesearch(C,theta,d,alpha=1.0):
         return ll_(C,theta + alpha*d) - ll_(C,theta) >= eta_c*alpha*float(g.T*d)
     def wolfe(C,theta,d,alpha):
         eta_w = 0.9999
-        g1 = float(g_(C,theta+alpha*d).T*d)
-        g2 = float(g_(C,theta).T*d)
+        g1 = abs(float(g_(C,theta+alpha*d).T*d))
+        g2 = abs(float(g_(C,theta).T*d))
         return g1 <= eta_w*g2
        
     while (armijo(C,theta,d,alpha) and wolfe(C,theta,d,alpha))==False and j < maxJ:
@@ -337,14 +323,16 @@ def QN2(c,gammas0,thetas0,maxit=100,ftol=1e-6,merit_type='rg',mod=False,printing
         linesearchiterations += iters
         if foundalpha == False:
             if foundalphaprev == False:
-                numEMiters = 10
-                if countEMusage > 10:
-                    numEMiters = 500
                 if mod == True:
+                    numEMiters = 10
+                    if countEMusage > 10:
+                        numEMiters = 500
                     countEMusage += 1
                     gammas,thetas = theta_list(theta)
                     theta = EM_(c,gammas,thetas,maxit=numEMiters,returntype=1)[0]
                     linesearchiterations += 1
+                else:
+                    break
             S = np.matrix(np.zeros((numparams,numparams)))
             #g = g_(C,theta)
             #gt = gt_(C,theta)

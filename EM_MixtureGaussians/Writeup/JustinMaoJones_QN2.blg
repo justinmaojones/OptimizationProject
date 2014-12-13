@@ -8,17 +8,12 @@ I was expecting a `,' or a `}'---line 40 of file references.bib.bib
  :  volume = "59",
 (Error may have been on previous line)
 I'm skipping whatever remains of this entry
-I was expecting a `,' or a `}'---line 56 of file references.bib.bib
+I was expecting a `,' or a `}'---line 69 of file references.bib.bib
  :  
  :  year = "2006",
 (Error may have been on previous line)
 I'm skipping whatever remains of this entry
-I was expecting a `,' or a `}'---line 65 of file references.bib.bib
- :  
- :  year = "2006",
-(Error may have been on previous line)
-I'm skipping whatever remains of this entry
-I was expecting a `,' or a `}'---line 74 of file references.bib.bib
+I was expecting a `,' or a `}'---line 77 of file references.bib.bib
  :  
  :  year = "1997",
 (Error may have been on previous line)
@@ -27,49 +22,48 @@ Warning--there's a number but no volume in khalfan93
 Warning--empty publisher in McLachlanKrishnanEM
 Warning--empty year in McLachlanKrishnanEM
 Warning--empty year in McLachlanKrishnanEM
-Warning--empty publisher in nocedalwright_BFGS
-Warning--empty year in nocedalwright_BFGS
-Warning--empty publisher in nocedalwright_SQP
-Warning--empty year in nocedalwright_SQP
+Warning--empty publisher in nocedalwright
+Warning--empty year in nocedalwright
+Warning--empty year in nocedalwright
 You've used 10 entries,
             2773 wiz_defined-function locations,
-            647 strings with 6108 characters,
-and the built_in function-call counts, 3903 in all, are:
-= -- 331
+            650 strings with 6224 characters,
+and the built_in function-call counts, 3894 in all, are:
+= -- 333
 > -- 195
 < -- 8
-+ -- 68
++ -- 67
 - -- 57
-* -- 298
+* -- 291
 := -- 612
 add.period$ -- 30
 call.type$ -- 10
 change.case$ -- 49
-chr.to.int$ -- 9
-cite$ -- 28
-duplicate$ -- 200
-empty$ -- 346
+chr.to.int$ -- 10
+cite$ -- 27
+duplicate$ -- 199
+empty$ -- 344
 format.name$ -- 77
-if$ -- 811
-int.to.chr$ -- 2
+if$ -- 810
+int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 13
+missing$ -- 12
 newline$ -- 58
 num.names$ -- 40
-pop$ -- 111
+pop$ -- 106
 preamble$ -- 1
 purify$ -- 39
 quote$ -- 0
-skip$ -- 133
+skip$ -- 140
 stack$ -- 0
 substring$ -- 95
-swap$ -- 12
+swap$ -- 10
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 95
-warning$ -- 8
+type$ -- 100
+warning$ -- 7
 while$ -- 35
 width$ -- 0
-write$ -- 131
-(There were 4 error messages)
+write$ -- 130
+(There were 3 error messages)
