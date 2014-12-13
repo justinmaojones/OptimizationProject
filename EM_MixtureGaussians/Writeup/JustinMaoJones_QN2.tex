@@ -16,7 +16,10 @@
 \usepackage[utf8]{inputenc}
 \usepackage[section]{algorithm}
 \usepackage{algpseudocode}
-\DeclareGraphicsExtensions{6f1.png,6f2.png}
+\DeclareGraphicsExtensions{
+	fig_RunData2_K2_init3.png,
+	fig_RunData2_K5_init3.png,
+	fig_RunData2_K10_init3.png}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \newcommand*\rfrac[2]{{}^{#1}\!/_{#2}}
 \setlength{\topmargin}{-.5in}
@@ -187,6 +190,19 @@ and $k < $ \textbf{maxit}}
 \end{algorithmic}
 \end{algorithm}
 
+\subsection{Convergence} \label{section:convergence}
+
+\cite{wu1983} identified several key convergence properties of the EM algorithm.  The relevant one here is:
+\begin{list}{-}{}
+\item "If the unobserved complete-data specification of the can by defined by a curved exponential family with compact parameter space, all the limit points of any EM sequence are stationary points of the likelihood function."
+\item It cannot be guaranteed that EM converges to the maximum likelihood estimator.
+\item It cannot be guaranteed that a stationary point is a local maximum.
+\end{list}
+
+Mixtures of Poissons are within the exponential family, and thus we can assume that the EM algorithm will converge to a stationary point.  Furthermore, since we are working with probabilities, the maximum likelihood function is bounded above by 1. 
+
+Note we do not have enough information about the likelihood function of the mixture of Poissons to determine whether or not we converge to the MLE or even a local maximum.  Thus, in the Comparison section below, I discuss results in terms of convergence to stationary points.
+
 \section{QN2 Algorithm}
 
 The QN2 Algorithm by \cite{jamshidianj97} is described as a Quasi Newton method using Broyden-Fletcher-Goldfarb-Shanno (BFGS) symmetric rank 2 updating.  I will show how it can be applied with Sequential Quadratic Programming to estimate n-dimensional mixture models with equality constraints.   
@@ -288,7 +304,6 @@ where
 \Delta \theta_k^* = -\Delta \tilde{g_k} + S_k \Delta g_k
 \]
 As will be seen in the next section, it is important to initialize $S_0$ to $\boldsymbol{0}$.
-
 
 \subsection{Constraints}
 The problem of finding the maximum likelihood estimate is often a constrained optimization problem.  For example, in the mixture of poissons, we have the following constraints:
@@ -610,6 +625,12 @@ $t < T$
 
 This line search runs until it either finds an $\alpha_k$ that satisfies the Strong Wolfe Conditions or else terminates if the number of line search attempts exceeds the maximum 10 attempts, in which case we consider the line search a failure.  If the line search fails, we "restart" QN2 by re-initializing $S$ to $S_0$.
 
+\subsection{Convergence}
+
+A nice property of the BFGS update is that, assuming the objective function is twice continuously differentiable with a compact level set, and the initial Hessian approximation os symmetric negative definite, then the sequence of iterates will converge to a maximizer (see \cite{nocedalwright_BFGS}).  
+
+Given the special structure of QN2, however, I hesitate to translate that assumption to QN2.  While \cite{jamshidianj97} showed that $\nabla_\theta^2Q(\hat{\theta}|\hat{\theta})$ is negative definite, the structure of QN2 is quite special, and more work would need to be done to explore its convergence properties.  Given more time, I would have pursued this.  For now, this remains an unknown for the project.
+
 \subsection{Termination}
 
 \cite{jamshidianj97} use a "relative gradient" merit function proposed by \cite{khalfan93} shown below.
@@ -677,7 +698,7 @@ $rg \geq f_{tol}$ and $k <$ maxit}
 \State $\Delta S = $ BFGS Update 
 \indent \indent \indent \indent \indent \indent \indent \space \space \textit{Eqn (\ref{eq:BFGS})}
 \State $\theta = \theta + \Delta\theta$
-\State $rg = rg(\theta,g)$
+\State $rg = rg(\theta)$
 \State $\bar{g} = \bar{g}+\Delta g$
 \State $\tilde{g} = \tilde{g}+\Delta \tilde{g}$
 \State $S = S +\Delta S$
@@ -749,7 +770,7 @@ The scope of my comparison EM and QN2 SQP encompasses "practical problems", rath
 
 From a practical perspective, two high level criteria for comparing algorithms are speed and reliability.  From the user's perspective, speed is execution time, and reliability is whether or not the algorithm converges to the solution.  Therefore, I compare convergence rates, execution times, convergence failures, and solutions.
 
-I run comparisons on a mixtures of 2 Poissons (sample size 3000), 5 Poissons (sample size 3000), and 10 Poissons (sample size 30000).
+I run comparisons on a mixtures of 2 Poissons (sample size 3000), 5 Poissons (sample size 3000), and 10 Poissons (sample size 3000).  For each mixture size, EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the next section).
 
 \subsection{Random Problem Generator}
 
@@ -785,7 +806,35 @@ Initialization C:
 
 As an aside, any point in which $\lambda_1 = \dots = \lambda_n$ is a stationary point, and very likely not the maximum likelihood estimator.
 
-\subsection{Results}
+\pagebreak
+\subsection{Results: Size 2 Mixtures}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=16cm]{fig_RunData2_K2_init3.png}
+\caption{Results from running EM and QN2 on randomly generated data from poisson mixtures of size 2.  EM and QN2 were tested on a total of 100 randomly generated problems.  EM and QN2 were each run from 3 different starting points, A,B,and C (described in the previous section).}
+\end{figure}
+
+Figure 1a shows a scatter plot of the runtimes for each problem, with EM runtimes on the x-axis and QN2 runtimes on the y-axis.  The color scale refers to the initialization points A, B, and C.  Points below the dotted line correspond to problems in which EM took longer than QN2 to terminate.  Note that the runtimes are on a log scale.  
+
+Given EM's reputation for slow convergence and Quasi-Newton's reputation for superlinear convergence, it is surprising to find that, overall, EM tends to finish before QN2.  However, we can see that EM runtimes have a tendency to "explode", corresponding to sublinear convergence, lending credence to EM's reputation.  QN2 runtimes, on the other hand, tend to lie in a much narrower band (roughly between $10^{-2.5}$ and $10^{-1}$ seconds).
+
+Figures 1b measures one aspect of reliability: how often does the algorithm terminate at a stationary point?  Convergence to a stationary point is defined $rg(\theta_k) \leq f_{tol}$, where $rg(\theta_k)$ is the merit function defined Eqn (\ref{eq:rg}).  All EM runs successfully terminated at a stationary point.  Not all of the QN2 runs converged to a stationary point.  QN2 runs that failed to convergence did so because the line search failed.  Recall that as part of the QN2 algorithm, if line search fails, then $S_k$ is reset to $\boldsymbol{0}_{2n \times 2n}$.  If after this reset line search fails again, then QN2 has no more options and consequently breaks and returns an error.  QN2 with initialization B shows the worst performance.  Further work could be done to determine more successful line search strategies for QN2.
+
+Figure 1c measures another aspect of reliability: did the algorithm converge to the largest likelihood?  Here I loosely defined a tolerance range of $10^{-3}$ for comparing one log likelihood function value to another.  Meaning that values with $10^{-3}$ of each other are considered the same.  This threshold seemed to sufficiently capture nearly all of the of the "close" values.  Initialization B shows a lower reliability in both EM and QN2 runs.
+
+Figure 1d plots a histogram of the observed convergence rates of EM and QN2.  Since optimal points are unknown, the convergence rate $r$ at iteration $k$ is loosely defined as:
+\[
+\frac{|rg(\theta_k+1)|}{|rg(\theta_k)|^r} = 1
+\indent
+\rightarrow
+\indent
+r = \frac{\log(rg(\theta_k+1))}{\log(rg(\theta_k))}
+\]
+The reported convergence rates are the average of the convergence rate in the final 2 iterations for each run.  Convergence rates were not included for runs that terminated without converging.
+
+Figure 1d shows unsurprising results.  EM shows linear convergence and QN2 shows superlinear convergence.
+
 
 
 

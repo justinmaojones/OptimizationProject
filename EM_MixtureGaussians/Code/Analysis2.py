@@ -10,15 +10,30 @@ import prettyplotlib as ppl
 import matplotlib.gridspec as gridspec
 
 #filename = 'RunDataK2' 
-filename = "RunData2_K10_init3" 
 
-       
+K = 10
+
+filename = "RunData2_K%s_init3" %K 
+if K == 2:
+    ax1_text = [[0.01,2],[1,0.001]] #faster, slower
+    ax5_bins = np.arange(2,5.6,0.125)
+    ax6_bins = np.arange(0,0.1,0.005)
+if K == 5:
+    ax1_text = [[0.07,10],[2,0.025]] #faster, slower
+    ax5_bins = np.arange(2,5.6,0.125)
+    ax6_bins = np.arange(0,0.1,0.005)
+if K == 10:
+    ax1_text = [[0.02,10],[1,0.025]] #faster, slower
+    ax5_bins = np.arange(2,5.6,0.125)
+    ax6_bins = np.arange(0,0.1,0.005)
+
+
 #def RunAnalysis(filename):
 RunDataList = pickleLoad(filename)
 RunData = [run for run in RunDataList]
 numinits = len(RunData)    
 
-nummixtures = 2#RunData[0][0].num_mixtures
+nummixtures = RunData[0][0].num_mixtures
 title = str(nummixtures)+' mixtures\n'
 
 em_times = []
@@ -54,14 +69,14 @@ time_comparisons = [em_times[i]<qn_times[i] for i in range(numinits)]
 em_faster_percent_runs = round(100*np.concatenate(time_comparisons).mean())
 
 
-fig = plt.figure(figsize=(10,15))
-gs = gridspec.GridSpec(3, 2)
+fig = plt.figure(figsize=(15,10))
+gs = gridspec.GridSpec(2, 3)
 ax1 = plt.subplot(gs[0,0])
-ax2 = plt.subplot(gs[1,0])
-ax3 = plt.subplot(gs[2,0])
-ax4 = plt.subplot(gs[0,1])
+ax2 = plt.subplot(gs[0,1])
+ax3 = plt.subplot(gs[0,2])
+ax4 = plt.subplot(gs[1,0])
 ax5 = plt.subplot(gs[1,1])
-ax6 = plt.subplot(gs[2,1])
+ax6 = plt.subplot(gs[1,2])
 gs.tight_layout(fig,pad=3.0,w_pad=5, h_pad=7.5)
 
 #fig, ((ax1,ax2,ax3),(ax4,ax5,ax6)) = plt.subplots(2, 3)
@@ -77,14 +92,14 @@ minrange = min(xlim[0],ylim[0])
 maxrange = max(xlim[1],ylim[1])
 linerange = np.arange(minrange,maxrange)
 ax1.plot(linerange,linerange,'k--')
-ax1.set_title(title+"scatter of runtimes (seconds)")
+ax1.set_title("(a)  "+title+"scatter of runtimes (seconds)")
 ax1.set_xlabel('EM runtime (s)')
 ax1.set_ylabel('QN2 runtime (s)')
 ax1.set_xlim(minrange,maxrange)
 ax1.set_ylim(minrange,maxrange)
 ax1.legend(loc='upper left')
-ax1.text(5,100,'EM faster\n%s%% of runs'%em_faster_percent_runs)
-ax1.text(100,11,'EM slower\n%s%% of runs'%(100-em_faster_percent_runs))
+ax1.text(ax1_text[0][0],ax1_text[0][1],'EM faster\n%s%% of runs'%em_faster_percent_runs)
+ax1.text(ax1_text[1][0],ax1_text[1][1],'EM slower\n%s%% of runs'%(100-em_faster_percent_runs))
 #plt.show()
 
 '''
@@ -105,7 +120,8 @@ converged_sum = np.sum(converged,axis=0)
 labels = ['EM '+initnames[i] for i in range(numinits)] + ['QN2 '+initnames[i] for i in range(numinits)]
 #fig, ax = plt.subplots(1)
 ppl.bar(ax2,np.arange(numinits*2),converged_sum,xticklabels=labels,annotate=True)
-ax2.set_title(title+"% converged to stationary point")
+ax2.set_title("(b)  "+title+"% converged to stationary point")
+ax2.set_ylabel('% converged')
 ax2.legend()
 #plt.show()
 
@@ -132,8 +148,9 @@ loglikdiff_ismax_sum = np.sum(loglikdiff_ismax,axis=0)
 labels = ['EM '+initnames[i] for i in range(numinits)] + ['QN2 '+initnames[i] for i in range(numinits)]
 #fig, ax = plt.subplots(1)
 ppl.bar(ax3,np.arange(numinits*2),loglikdiff_ismax_sum,xticklabels=labels,annotate=True)
-ax3.set_title(title+"is maximum of log likelihoods\n(not necessarily local max)")
+ax3.set_title("(c)  "+title+"is maximum of log likelihoods\n(not necessarily local max)")
 ax3.set_ylim((0,110))
+ax3.set_ylabel('% terminated at largest log likelihood')
 ax3.legend()
 #plt.show()
 
@@ -193,11 +210,13 @@ for r in range(numinits):
 #labels=[initnames[i]+': EM' for i in range(numinits)]+[initnames[i]+': QN2' for i in range(numinits)]
 labels = ['EM','QN2']
 ppl.hist(ax4,[np.concatenate(em_rate),np.concatenate(qn_rate)],label=labels)
-ax4.set_title(title+"histogram of convergence rates")
+ax4.set_title("(d)  "+title+"histogram of convergence rates")
+ax4.set_ylabel('frequency')
+ax4.set_xlabel('convergence rate r')
 ax4.legend()
 #plt.show()
 
-
+'''
 #fig, ax = plt.subplots(1)
 for i in range(numinits):
     em_k[i][em_k[i]==0] = 1
@@ -206,9 +225,9 @@ em_time_k_ratio = [np.log10(em_times[i]/em_k[i]*1e6) for i in range(numinits)]
 qn_time_k_ratio = [np.log10(qn_times[i]/qn_k[i]*1e6) for i in range(numinits)]
 #labels=[initnames[i]+': EM' for i in range(numinits)]+[initnames[i]+': QN2' for i in range(numinits)]
 labels = ['EM','QN2']
-bins = np.arange(2,5.6,0.125)
-ppl.hist(ax5,[np.concatenate(em_time_k_ratio),np.concatenate(qn_time_k_ratio)],bins=bins,label=labels)
-ax5.set_title(title+"histogram of\nlog10(nanoseconds per iteration)")
+#bins = np.arange(2,5.6,0.125)
+ppl.hist(ax5,[np.concatenate(em_time_k_ratio),np.concatenate(qn_time_k_ratio)],bins=ax5_bins,label=labels)
+ax5.set_title("(e)  "+title+"histogram of\nlog10(nanoseconds per iteration)")
 xlim = ax5.get_xlim()
 numticks = len(ax5.get_xticklabels())
 #exponents = np.arange(xlim[0],xlim[1]+(xlim[1]-xlim[0])/(numticks-1),(xlim[1]-xlim[0])/(numticks-1))
@@ -219,6 +238,41 @@ ax5.set_xticklabels(labels)
 #ax5.set_xscale('symlog')
 ax5.legend()
 #plt.show()
+'''
+
+
+for i in range(numinits):
+    em_k[i][em_k[i]==0] = 1
+    qn_k[i][qn_k[i]==0] = 1
+log_em_k = [np.log(k) for k in em_k]
+log_qn_k = [np.log(k) for k in qn_k]
+'''
+labels = ['EM','QN2']
+#bins = np.arange(0,0.1,0.005)
+ppl.hist(ax5,[np.concatenate(log_em_k),np.concatenate(log_qn_k)],label=labels)
+ax5.set_title("(f)  "+title+"histogram of\n# iterations")
+ax5.legend()
+'''
+
+for i in range(numinits):
+    #ppl.scatter(ax,np.log(em_times[i]),np.log(qn_times[i]),label=initnames[i])
+    ppl.scatter(ax5,em_k[i],qn_k[i],label=initnames[i])
+ax5.set_xscale('log')
+ax5.set_yscale('log')
+xlim = ax5.get_xlim()
+ylim = ax5.get_ylim()
+minrange = min(xlim[0],ylim[0])
+maxrange = max(xlim[1],ylim[1])
+linerange = np.arange(minrange,maxrange)
+ax5.plot(linerange,linerange,'k--')
+ax5.set_title("(a)  "+title+"scatter of # iterations")
+ax5.set_xlabel('EM # iterations')
+ax5.set_ylabel('QN2 # iterations')
+ax5.set_xlim(minrange,maxrange)
+ax5.set_ylim(minrange,maxrange)
+ax5.legend(loc='upper left')
+
+
 
 #fig, ax = plt.subplots(1)
 for i in range(numinits):
@@ -229,9 +283,11 @@ qn_time_k_ratio = [qn_times[i]/qn_k[i] for i in range(numinits)]
 em_qn_time_k_ratio = [em_time_k_ratio[i]/qn_time_k_ratio[i] for i in range(numinits)]
 #labels=[initnames[i]+': EM' for i in range(numinits)]+[initnames[i]+': QN2' for i in range(numinits)]
 labels = ['A','B','C']
-bins = np.arange(0,15,0.5)
-ppl.hist(ax6,np.concatenate(em_qn_time_k_ratio))#,label=labels)
-ax6.set_title(title+"histogram of ratio of\n[EM seconds/iteration]/[QN2 seconds/iteration]")
+#bins = np.arange(0,0.1,0.005)
+ppl.hist(ax6,np.concatenate(em_qn_time_k_ratio),bins=ax6_bins)#,label=labels)
+ax6.set_title("(f)  "+title+"histogram of\nrelative calculation load")
+ax6.set_xlabel('[EM seconds/iteration] / [QN2 seconds/iteration]')
+ax6.set_ylabel('frequency')
 ax6.legend()
 #plt.show()
 
