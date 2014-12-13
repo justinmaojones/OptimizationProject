@@ -45,9 +45,9 @@ def printlast20(Log):
     
 
 
-num_mixtures = 10
-num_samples = 3000
-exp_lambda = 10.0
+num_mixtures = 30
+num_samples = 30000
+exp_lambda = 15.0
 T = 100
 numruns = 3
 RunData = [[] for i in range(numruns)]
