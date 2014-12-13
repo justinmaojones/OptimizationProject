@@ -45,9 +45,9 @@ def printlast20(Log):
     
 
 
-num_mixtures = 30
-num_samples = 30000
-exp_lambda = 15.0
+num_mixtures = 10
+num_samples = 3000
+exp_lambda = 10.0
 T = 100
 numruns = 3
 RunData = [[] for i in range(numruns)]
@@ -83,6 +83,7 @@ for t in range(T):
                         maxit=1e4,
                         ftol = 1e-6,
                         merit_type = 'rg',
+                        mod = True,
                         printing=False)
         print "QN2"
         problem.init_QN2(params_QN2)

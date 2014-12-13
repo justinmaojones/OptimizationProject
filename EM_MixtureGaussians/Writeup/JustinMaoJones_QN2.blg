@@ -18,50 +18,58 @@ I was expecting a `,' or a `}'---line 65 of file references.bib.bib
  :  year = "2006",
 (Error may have been on previous line)
 I'm skipping whatever remains of this entry
+I was expecting a `,' or a `}'---line 74 of file references.bib.bib
+ :  
+ :  year = "1997",
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
 Warning--there's a number but no volume in khalfan93
+Warning--empty publisher in McLachlanKrishnanEM
+Warning--empty year in McLachlanKrishnanEM
+Warning--empty year in McLachlanKrishnanEM
 Warning--empty publisher in nocedalwright_BFGS
 Warning--empty year in nocedalwright_BFGS
 Warning--empty publisher in nocedalwright_SQP
 Warning--empty year in nocedalwright_SQP
-You've used 8 entries,
+You've used 10 entries,
             2773 wiz_defined-function locations,
-            637 strings with 5776 characters,
-and the built_in function-call counts, 3235 in all, are:
-= -- 277
-> -- 164
-< -- 6
-+ -- 57
-- -- 48
-* -- 253
-:= -- 507
-add.period$ -- 24
-call.type$ -- 8
-change.case$ -- 40
-chr.to.int$ -- 7
-cite$ -- 21
-duplicate$ -- 161
-empty$ -- 284
-format.name$ -- 64
-if$ -- 674
+            647 strings with 6108 characters,
+and the built_in function-call counts, 3903 in all, are:
+= -- 331
+> -- 195
+< -- 8
++ -- 68
+- -- 57
+* -- 298
+:= -- 612
+add.period$ -- 30
+call.type$ -- 10
+change.case$ -- 49
+chr.to.int$ -- 9
+cite$ -- 28
+duplicate$ -- 200
+empty$ -- 346
+format.name$ -- 77
+if$ -- 811
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 10
-newline$ -- 48
-num.names$ -- 32
-pop$ -- 85
+missing$ -- 13
+newline$ -- 58
+num.names$ -- 40
+pop$ -- 111
 preamble$ -- 1
-purify$ -- 32
+purify$ -- 39
 quote$ -- 0
-skip$ -- 108
+skip$ -- 133
 stack$ -- 0
-substring$ -- 91
-swap$ -- 10
+substring$ -- 95
+swap$ -- 12
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 78
-warning$ -- 5
-while$ -- 29
+type$ -- 95
+warning$ -- 8
+while$ -- 35
 width$ -- 0
-write$ -- 108
-(There were 3 error messages)
+write$ -- 131
+(There were 4 error messages)

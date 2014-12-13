@@ -34,21 +34,29 @@
 
 \section{Introduction}
 
-In 1977, \citeauthor*{dempsterlr77} (henceforth abbreviated DLR) proposed the EM algorithm, which has since become, and continues to be, a popular method for computing maximum likelihood estimates from incomplete data.  \cite{wu1983} showed that under certain properties, the sequence of EM iterates converge to a unique maximum likelihood estimate.
+In 1977, \citeauthor*{dempsterlr77} proposed the EM algorithm, which has since become, and continues to be, a popular method for computing maximum likelihood estimates from incomplete data.  
 
 A drawback of the EM algorithm is its tendency towards slow convergence.  In certain practical applications, the EM algorithm has been shown to exhibit sublinear convergence.  For examples see \cite{lange1995a,jamshidianj93,jamshidianj97}.
 
-Modifications and extensions of the EM algorithm have been proposed to speed up convergence, and are often referred to as "accelerators".  In this project, I focus on the QN2 introduced by \cite{jamshidianj97}.  QN2 has been referred to as a Quasi Newton accelerator of the EM algorithm.  I explain the structure of the QN2 algorithm in relation to the underlying EM concepts and conventional Quasi Newton optimization concepts.  I then exhibit and discuss the results of an application of the QN2 algorithm to deriving MLE parameter estimates of a mixture of poissons.  \cite{jamshidianj97} applied QN2 to a mixture of 2 poissons.  I generalize this to a mixture of $n$ poissons.
+Modifications and extensions of the EM algorithm have been proposed to speed up convergence, and are often referred to as "accelerators".  In this project, I focus on one particular accelerator, dubbed QN2, introduced by \cite{jamshidianj97}.  In that paper, QN2 was applied to the problem of finding the maximum likelihood estimate of a sample set derived from a mixture of 2 Poisson-distributed populations.  That particular example, as well as other examples in \cite{jamshidianj97}, illustrated significant improvements in calculation runtime using QN2.
 
-For the sake of the interested reader, I include the major steps of the derivation of both EM and QN2 algorithms.  An additional goal of this project is to present QN2 in such a way that a reader familiar with Quasi Newton methods, but with little experience in either EM and QN2 could understand the underlying theory and implement both the EM and QN2 algorithms.
+Motivated by those results, I formulate this project around building my own understanding of EM and QN2 by working through the corresponding derivations and computational application of both.  The QN2 has some very interesting properties that I will discuss.
+
+My own contributions are as follows.  I build upon the work by \cite{jamshidianj97} and show how QN2 construction of the mixture of two Poissons problem can be generalized to the well-known $n$-mixture problem.  I show how, when applied to certain problems, QN2 can be formulated as a Sequential Quadratic Programming problem and why this is important for the generalization of the mixture of Poissons problem.  I also investigate special properties of QN2 and show how selection of certain initial conditions can help maintain equality constraints within QN2.  Finally, I apply EM and QN2 to the generalized $n$ mixtures of Poissons problem and compare results, which turn out to be contrary to what I expected. 
+
+Before I continue, I would like to say that, while I claim some of the above as my own contributions, I have not performed an exhaustive literature search, and so some of these specific contributions may have already been done elsewhere.  
+
+The structure of this report begins by explaining the derivation of EM and QN2.  For the sake of the interested reader, I include the major steps of the derivation of both the EM and QN2 algorithms and the outline of which mirrors the development of my own understanding of EM and QN2.  I briefly cover relevant convergence concepts as well as some of the finer details of my implementation of QN2, such as line search methodology and termination criteria.  Following that is a report on the computational experiments.
 
 \section{EM Algorithm}
 
-The EM algorithm, otherwise known as expectation-maximization, is a method for computing the maximum likelihood parameter estimates from incomplete data.  Incomplete data is a set of data in which some or all observations contain variables with missing data.  
+The EM algorithm, otherwise known as expectation-maximization, is a method for computing the maximum likelihood parameter estimates from incomplete data.  Incomplete data is defined as a set of data in which some or all observations contain variables with missing data.  
 
-To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=(\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n)^T$, where $\gamma_r$ and $\lambda_r$ are the parameters of population $r$.  This construction is known as a mixture of poissons.  We seek to estimate $\theta$ using maximum likelihood.  We do not know which of the $n$ populations the observation $x_i$ corresponds to.  Let $z_i \in \{1,...,n\}$ denote the identity of the population that $x_i$ belongs to.  In this example, $\{x_1,...,x_m\}$ is incomplete data, $\{z_1,...,z_m\}$ is missing data, and $\{(x_1,z_1),...,(x_m,z_m)\}$ is the complete (unknown) data.
+To use an illustrative example, consider a set of $m$ randomly sampled observations $\{x_1,...,x_m\}$.  Suppose that we would like to explore the possibility that each of these observations comes from one of $n$ poisson-distributed populations with unknown parameters $\theta=(\gamma_1,...,\gamma_n,\lambda_1,...,\lambda_n)^T$, where $\lambda_r$ parameterizes the poisson probability density of population $r$ and $\gamma_r$ is the prior probability that $x_i$ was chosen from population $r$.  This construction is known as a mixture of poissons.
 
-The probability distribution of an incomplete observation $x_i$ conditional on $z_i$ is:
+We seek to estimate $\theta$ using maximum likelihood.  However, we do not know which of the $n$ populations the observation $x_i$ corresponds to.  Let $z_i \in \{1,...,n\}$ denote the identity of the population that $x_i$ belongs to.  In this example, $\{x_1,...,x_m\}$ is incomplete data, $\{z_1,...,z_m\}$ is missing data, and $\{(x_1,z_1),...,(x_m,z_m)\}$ is the complete (unknown) data.
+
+The probability distribution of an incomplete observation $x_i$ conditional on the knowledge that $z_i=r$ is:
 \[
 p(x_i=j|z_i=r,\theta) = \frac{e^{-\lambda_r}\lambda_r^{j}}{j!}  
 \indent
@@ -75,11 +83,17 @@ We wish to compute the maximum likelihood estimates, and so we begin with the lo
 \[
 l(\theta) = \log(\prod_{i=1}^{m}p(x_i|\theta)) = \sum_{i=1}^{m} \log(p(x_i|\theta))
 \]
-This is the point at which a method such as the EM algorithm becomes useful.  Since $z_i$ are unobserved, solving for the roots of the derivative of $l(\theta)$ can be an intractable problem:
+This is the point at which a method such as the EM algorithm becomes useful.  The following is a derivation of the EM algorithm that can be found in \cite{McLachlanKrishnanEM}.  Educational tutorials can also be found at:
+\begin{list}{-}{}
+\item Andrew Ng Lecture Notes  http://cs229.stanford.edu/notes/cs229-notes8.pdf
+\item \cite{gentletutorial}
+\end{list}
+
+Continuing on with the derivation, since $z_i$ are unobserved, solving for the roots of the derivative of $l(\theta)$ can be an intractable problem:
 \[
 \sum_{i=1}^{m} \log(p(x_i|\theta)) = \sum_{i=1}^{m} \log\left(\sum_{r=1}^{n}p(x_i,z_i|\theta))\right)
 \]
-Fortunately, $l(\theta)$ can be converted into a more manageable form.  Consider the probability distribution $p(\vec{z}|\vec{x},\phi)$.  Note that this function is parameterized by $\phi$ and not $\theta$.  Per the EM literature:
+Fortunately, $l(\theta)$ can be converted into a more manageable form.  Consider the probability distribution $p(\vec{z}|\vec{x},\phi)$.  Note that this function is parameterized by $\phi$ and not $\theta$.  The likelihood function can be deconstructed as follows:
 \[
 l(\theta) = \log(p(\vec{x}|\theta)) 
 = \int_{\vec{z}}p(\vec{z}|\vec{x},\phi)\log(p(\vec{x}|\theta))d\vec{z}
@@ -94,8 +108,7 @@ E[\log(p(\vec{z}|\vec{x},\theta))|\vec{x},\phi]
 =Q(\theta|\phi)
 -H(\theta|\phi)
 \end{equation}
-
-where $Q(\theta|\phi)$ and $H(\theta|\phi)$ are defined as the left and right conditional expectations, respectively.  In the words of \cite{lange1995a}, this derivation can seem "slightly mysterious."  In order to shed some light on this result, I will show how it follows from our specific mixture of poissons problem.  We will use the following identity, which follows from the assumption that our observations are independent:
+where $Q(\theta|\phi)$ and $H(\theta|\phi)$ are defined as the left and right conditional expectations, respectively.  In the words of \cite{lange1995a}, this derivation can seem "slightly mysterious".  In order to shed some light on this result, I will show how it follows from our specific mixture of poissons problem.  We will use the following identity, which follows from the assumption that our observations are independent:
 \[
 1 = \int_{\vec{z}}p(\vec{z}|\vec{x},\phi)d\vec{z}
 = \prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
@@ -107,11 +120,11 @@ l(\theta)
 \prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
 \]
 \[
-= \left( \sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i\right)
-\prod_{j=1}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j
+=  \sum_{i=1}^{m}\left( \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
+\prod_{j\neq i}^{m}\int_{z_j}p(z_j|x_j,\phi)dz_j\right)
 =\sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta)dz_i
 \]
-The previous result was derived by putting the $i^{th}$ integral inside of the summation and the log inside of the integral.  Now we use Bayes' theorem to derive a useful result:
+The previous result was derived by putting the $i^{th}$ integral inside of the summation and the log inside of the integral.  The remaining product term is just 1 and so we can remove it.  Now we use Bayes' theorem to derive a useful result:
 \[
 \sum_{i=1}^{m} \int p(z_i|x_i,\phi)\log(p(x_i|\theta))dz_i
 = \sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(x_i,z_i|\theta)\frac{p(x_i|\theta)}{p(x_i,z_i|\theta)}\right) dz_i
@@ -135,7 +148,7 @@ This result is useful, because $\nabla_{\theta}l(\theta)$ evaluated at $\theta =
 \[
 \nabla_{\theta}H(\theta|\phi)|_{\theta = \phi}
 =
-\nabla_{\theta}\sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(z_i|x_i,\theta)\right) dz_i
+\nabla_{\theta}|_{\theta = \phi}\sum_{i=1}^{m} \int p(z_i|x_i,\phi) \log \left(p(z_i|x_i,\theta)\right) dz_i
 \]
 \[
 =
@@ -167,13 +180,13 @@ Thus, we have the following EM identity:
 =
 \nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}
 \end{equation}
-One way to think about this identity is that it shows where $\nabla_{\theta}l(\theta)|_{\theta = \phi}$ intersects with a more tractable function $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ in an extended parameter space.  The EM algorithm moves along this intersection in the hopes of finding a zero.
+One way to think about this identity is that it shows where $\nabla_{\theta}l(\theta)|_{\theta = \phi}$ intersects with  $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ in an extended parameter space.  The EM algorithm moves along this intersection in the hopes of finding a zero.  It just so happens that $\nabla_{\theta}Q(\theta|\phi)|_{\theta = \phi}$ tends to be much more tractable function than $\nabla_{\theta}l(\theta)|_{\theta = \phi}$.  
 
 This brings us to the specific steps of the EM algorithm, which works as follows.  Given an iterate $\theta_k$, the next iterate $\theta_{k+1}$ is defined as the $\theta$ that maximizes $Q(\theta|\phi)$ where $\phi$ is set to $\theta_k$.
 \[
 \theta_{k+1} = \argmax_{\theta}  Q(\theta|\theta_k) = M(\theta_k)
 \]
-The function $M(\theta_k)$ is known as the EM operator.  The algorithm begins with an initial parameter set $\theta_0$ and terminates when either $|M(\theta_k)-\theta_k|$ is small enough or a maximum number of iterations has been reached.
+The function $M(\theta_k)$ is known as the EM operator.  The algorithm begins with an initial parameter set $\theta_0$ and terminates when either $\|M(\theta_k)-\theta_k\|$ is small enough or a maximum number of iterations has been reached.
 
 
 \begin{algorithm}
@@ -182,7 +195,7 @@ The function $M(\theta_k)$ is known as the EM operator.  The algorithm begins wi
 \begin{algorithmic}[1]
 \State Initialize $\theta_0$; Define \textbf{maxit}, \textbf{ftol}
 \State $k = 0$
-\While{$|M(\theta_k)-\theta_k|<$ \textbf{ftol}
+\While{$\|M(\theta_k)-\theta_k\|<$ \textbf{ftol}
 and $k < $ \textbf{maxit}}
 \State $k = k+1$
 \State $\theta_{k+1} = M(\theta_k)$
@@ -192,16 +205,16 @@ and $k < $ \textbf{maxit}}
 
 \subsection{Convergence} \label{section:convergence}
 
-\cite{wu1983} identified several key convergence properties of the EM algorithm.  The relevant one here is:
+\cite{wu1983} identified several key convergence properties of the EM algorithm.  I list the relevant those relevant to the aims of this project:
 \begin{list}{-}{}
 \item "If the unobserved complete-data specification of the can by defined by a curved exponential family with compact parameter space, all the limit points of any EM sequence are stationary points of the likelihood function."
 \item It cannot be guaranteed that EM converges to the maximum likelihood estimator.
-\item It cannot be guaranteed that a stationary point is a local maximum.
+\item It can be shown that if $Q(\theta|\phi)$ is continuous on both $\theta$ and $\phi$, then the limit points of the sequence of an EM algorithm are stationary points of the likelihood function.  Thus, EM converges to a local maximum.  For exponential family distributions, this continuity condition is satisfied.
 \end{list}
 
 Mixtures of Poissons are within the exponential family, and thus we can assume that the EM algorithm will converge to a stationary point.  Furthermore, since we are working with probabilities, the maximum likelihood function is bounded above by 1. 
 
-Note we do not have enough information about the likelihood function of the mixture of Poissons to determine whether or not we converge to the MLE or even a local maximum.  Thus, in the Comparison section below, I discuss results in terms of convergence to stationary points.
+Note we do not have enough information about the likelihood function of the mixture of Poissons to determine whether or not we converge to the MLE.  Thus, in the Comparison section below, I discuss results in terms of convergence to stationary points.
 
 \section{QN2 Algorithm}
 

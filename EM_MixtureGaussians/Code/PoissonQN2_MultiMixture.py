@@ -287,7 +287,7 @@ def linesearch_secant(C,theta,d,alpha=1.0):
     
 
 @timethis
-def QN2(c,gammas0,thetas0,maxit=100,ftol=1e-6,merit_type='rg',mod=True,printing=False):
+def QN2(c,gammas0,thetas0,maxit=100,ftol=1e-6,merit_type='rg',mod=False,printing=False):
     C = inputdata(c)
     numparams = len(gammas0+thetas0)
     theta = theta_matrix(gammas0,thetas0)*1.0
@@ -312,7 +312,7 @@ def QN2(c,gammas0,thetas0,maxit=100,ftol=1e-6,merit_type='rg',mod=True,printing=
     printlines(line,printing)
     foundalpha = True
     alpha = 1
-    
+    countEMusage = 0
     while t < maxit and merit >= ftol:
         t=t+1
         if t % 1000 == 0:
@@ -324,20 +324,27 @@ def QN2(c,gammas0,thetas0,maxit=100,ftol=1e-6,merit_type='rg',mod=True,printing=
         
         # step b)
         alpha = paramconstraint(theta,d)
-        if t % 1000 == 0 and False:
-            if foundalpha == False:
-                print 'alpha =',alpha,' paramconstraint'
+        #if t % 1000 == 0 and False:
+        #    if foundalpha == False:
+        #        print 'alpha =',alpha,' paramconstraint'
         foundalphaprev = foundalpha
         foundalpha, alpha, iters = linesearch(C,theta,d,alpha)
-        if t % 1000 == 0 and False:
-            if foundalpha == False:
-                print 'alpha =',alpha,' linesearch'
-                print la.norm(gt)
+        #if t % 1000 == 0 and False:
+        #    if foundalpha == False:
+        #        print 'alpha =',alpha,' linesearch'
+        #        print la.norm(gt)
         #foundalpha, alpha, iters = linesearch_secant(C,theta,d,alpha)
         linesearchiterations += iters
         if foundalpha == False:
             if foundalphaprev == False:
-                theta = EM_(c,gammas0,thetas0,maxit=5,returntype=1)[0]
+                numEMiters = 10
+                if countEMusage > 10:
+                    numEMiters = 500
+                if mod == True:
+                    countEMusage += 1
+                    gammas,thetas = theta_list(theta)
+                    theta = EM_(c,gammas,thetas,maxit=numEMiters,returntype=1)[0]
+                    linesearchiterations += 1
             S = np.matrix(np.zeros((numparams,numparams)))
             #g = g_(C,theta)
             #gt = gt_(C,theta)

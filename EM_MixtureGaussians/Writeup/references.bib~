@@ -58,7 +58,7 @@
 	address = "New York, NY"
 	pages = "136-140"
 }
-@book{nocedalwright_BFGS,
+@book{nocedalwright_SQP,
 	author = "Jorge Nocedal and Stephen J. Wright",
 	title = "Numerical Optimization",
 	edition = "2nd"
@@ -66,4 +66,18 @@
 	publisher = "Springer",
 	address = "New York, NY"
 	pages = "530-532"
+}
+@book{McLachlanKrishnanEM,
+	author = "Geoffrey J. McLachlan and Thriyambakam Krishnan",
+	title = "The EM Algorithm and Extensions",
+	edition = "1st"
+	year = "1997",
+	publisher = "John Wiley & Sons, Inc.",
+	address = "New York, NY"
+}
+@article{gentletutorial,
+	author = "Jeff A. Bilmes",
+	title = "A Gentle Tutorial of the EM Algorithm and its Application to Parameter Estimation for Gaussian Mixture and Hidden Markov Models",
+	year = "1998",
+	journal = "International Computer Science Institute, Berkeley, CA"
 }
